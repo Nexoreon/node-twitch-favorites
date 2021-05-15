@@ -1,7 +1,7 @@
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
-require('dotenv').config('./config.env')
+require('dotenv').config({path: './config.env'})
 
 const app = express()
 app.use(express.json())

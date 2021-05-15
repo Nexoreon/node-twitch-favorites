@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "debug": "nodemon server.js"
   },
   "author": "Nexoreon",
   "license": "ISC",
@@ -18,6 +19,7 @@
     "mongoose": "^5.12.9",
     "morgan": "^1.10.0",
     "node-schedule": "^2.0.0",
+    "nodemon": "^2.0.7",
     "toad-scheduler": "^1.0.2"
   }
 }
