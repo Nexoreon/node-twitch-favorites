@@ -3,9 +3,9 @@ const chalk = require('chalk')
 const Table = require('cli-table')
 const pushNotification = require('../utils/pushNotification')
 
-const TwitchGame = require('../models/miniapps/Twitch/twitchGameModel')
-const TwitchBanned = require('../models/miniapps/Twitch/twitchBannedModel')
-const TwitchStats = require('../models/miniapps/Twitch/twitchStatsModel')
+const TwitchGame = require('../models/twitchGameModel')
+const TwitchBanned = require('../models/twitchBannedModel')
+const TwitchStats = require('../models/twitchStatsModel')
 
 const year = new Date().getFullYear()
 const month = new Date().getMonth() + 1

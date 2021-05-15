@@ -2,9 +2,9 @@ const axios = require('axios')
 const chalk = require('chalk')
 const pushNotification = require('../utils/pushNotification')
 
-const TwitchStreamer = require('../models/miniapps/Twitch/twitchStreamerModel')
-const TwitchGame = require('../models/miniapps/Twitch/twitchGameModel')
-const TwitchStats = require('../models/miniapps/Twitch/twitchStatsModel')
+const TwitchStreamer = require('../models/twitchStreamerModel')
+const TwitchGame = require('../models/twitchGameModel')
+const TwitchStats = require('../models/twitchStatsModel')
 
 const year = new Date().getFullYear()
 const month = new Date().getMonth() + 1

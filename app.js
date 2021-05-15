@@ -1,7 +1,8 @@
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
-require('dotenv').config({path: './config.env'})
+require('dotenv').config({path: './config1.env'})
+require('./utils/scheduler')
 
 const AppError = require('./utils/appError')
 const globalErrorHandler = require('./controllers/errorController')
