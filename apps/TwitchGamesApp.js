@@ -55,7 +55,7 @@ const TwitchGamesApp = async () => {
             }
         }
 
-        if (!streamersStatsIDs.includes(stream.user_id) && stream.language === 'en' && stream.viewer_count >= 2000 || !streamersStatsIDs.includes(stream.user_id) && stream.language === 'ru' && stream.viewer_count >= 2000) {
+        if (!streamersStatsIDs.includes(stream.user_id) && stream.language === 'en' && stream.viewer_count >= 140 || !streamersStatsIDs.includes(stream.user_id) && stream.language === 'ru' && stream.viewer_count >= 140) {
             await TwitchStats.create({
                 userId: stream.user_id,
                 userName: stream.user_name,
@@ -68,7 +68,7 @@ const TwitchGamesApp = async () => {
 
         if (!bannedStreamersIDs.includes(stream.user_id) && stream.language === 'en' || !bannedStreamersIDs.includes(stream.user_id) && stream.language === 'ru') { // make sure that streams language is russian or english
             const gameIndex = gamesIDs.indexOf(stream.game_id) // get game id that streamer currently playing
-            const minViewers = dbGames[gameIndex].search.minViewers || 2000 // if game db field with value minViewers exists, use it instead of default 2000
+            const minViewers = 140 // if game db field with value minViewers exists, use it instead of default 2000
             const gameCover = dbGames[gameIndex].box_art // get game box art
             tableArray.push([`${minViewers}`, `${stream.viewer_count}`, `${stream.game_name}`, `${stream.user_name}`]) // DEBUG
 
