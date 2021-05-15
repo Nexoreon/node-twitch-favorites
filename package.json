@@ -1,0 +1,23 @@
+{
+  "name": "twitch-apps",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Nexoreon",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "chalk": "^4.1.1",
+    "cli-table": "^0.3.6",
+    "cors": "^2.8.5",
+    "dotenv": "^9.0.2",
+    "express": "^4.17.1",
+    "mongoose": "^5.12.9",
+    "morgan": "^1.10.0",
+    "node-schedule": "^2.0.0",
+    "toad-scheduler": "^1.0.2"
+  }
+}
