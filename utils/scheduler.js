@@ -18,4 +18,4 @@ const checkGames = new SimpleIntervalJob({ minutes: 30 }, new Task('checkGames',
 scheduler.addSimpleIntervalJob(checkGames)
 
 // Twitch Stats: Checks every 24 hours for streamers stats in stats db and generates daily reports
-// const generateTwitchReport = nodeScheduler.scheduleJob({ hour: 18, tz: 'Etc/UTC'}, TwitchStatsApp)
+const generateTwitchReport = nodeScheduler.scheduleJob({ hour: 18, minute: 1, tz: 'Etc/UTC'}, TwitchStatsApp)
