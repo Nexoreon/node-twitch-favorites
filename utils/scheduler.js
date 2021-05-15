@@ -14,7 +14,7 @@ const checkStreams = new SimpleIntervalJob({ minutes: 10 }, new Task('checkStrea
 scheduler.addSimpleIntervalJob(checkStreams)
 
 // Twitch Games: Checks every 30 minutes for streamers that playing a favorite game from the list of games
-const checkGames = new SimpleIntervalJob({ minutes: 1 }, new Task('checkGames', TwitchGamesApp))
+const checkGames = new SimpleIntervalJob({ minutes: 30 }, new Task('checkGames', TwitchGamesApp))
 scheduler.addSimpleIntervalJob(checkGames)
 
 // Twitch Stats: Checks every 24 hours for streamers stats in stats db and generates daily reports
