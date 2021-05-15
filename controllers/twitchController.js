@@ -184,3 +184,11 @@ exports.unbanStreamer = catchAsync(async (req, res, next) => {
         message: 'Стример успешно разбанен'
     })
 })
+
+exports.test = catchAsync(async (req, res, next) => {
+    console.log('success')
+
+    res.status(200).json({
+        status: 'success'
+    })
+})
