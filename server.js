@@ -14,8 +14,8 @@ mongoose.connect(process.env.DB_URL, {
 .then(() => console.log('Успешное соединение с датабазой!'))
 .catch(err => console.log('Ошибка соединения с датабазой!', err))
 
-const server = app.listen(5000, () => {
-    console.log('Сервер запущен и прослушивается на порте: 5000')
+const server = app.listen(process.env.PORT || 5000, () => {
+    console.log(`Сервер запущен и прослушивается на порте: ${process.env.PORT}`)
 })
 
 process.on('unhandledRejection', err => {
