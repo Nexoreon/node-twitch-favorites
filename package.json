@@ -10,6 +10,7 @@
   "author": "Nexoreon",
   "license": "ISC",
   "dependencies": {
+    "@pusher/push-notifications-server": "^1.2.3",
     "axios": "^0.21.1",
     "chalk": "^4.1.1",
     "cli-table": "^0.3.6",
