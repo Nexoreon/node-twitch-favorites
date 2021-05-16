@@ -7,9 +7,9 @@ const TwitchGame = require('../models/twitchGameModel')
 const TwitchBanned = require('../models/twitchBannedModel')
 const TwitchStats = require('../models/twitchStatsModel')
 
-const year = new Date().getFullYear()
-const month = new Date().getMonth() + 1
-const day = new Date().getDate()
+const year = new Date().getFullYear().toString()
+const month = (new Date().getMonth() + 1).toString()
+const day = new Date().getDate().toString()
 
 const TwitchGamesApp = async () => {
     console.log(chalk.yellowBright('[Twitch Games]: Запуск проверки игр на Twitch...'), new Date(Date.now()))
@@ -25,8 +25,8 @@ const TwitchGamesApp = async () => {
     let twitchResponse
 
     const table = new Table({ // DEBUG
-        head: ['Мин. зрителей', 'Всего зрителей', 'Игра', 'Стример'],
-        colWidths: [15, 15, 25, 25]
+        head: ['Мин. зрителей', 'Всего зрителей', 'Игра', 'Стример', 'Заголовок'],
+        colWidths: [15, 15, 25, 25, 27]
     })
     const tableArray = [] // DEBUG
     
@@ -70,7 +70,7 @@ const TwitchGamesApp = async () => {
             const gameIndex = gamesIDs.indexOf(stream.game_id) // get game id that streamer currently playing
             const minViewers = dbGames[gameIndex].search.minViewers || 2000 // if game db field with value minViewers exists, use it instead of default 2000
             const gameCover = dbGames[gameIndex].box_art // get game box art
-            tableArray.push([`${minViewers}`, `${stream.viewer_count}`, `${stream.game_name}`, `${stream.user_name}`]) // DEBUG
+            tableArray.push([minViewers, stream.viewer_count, stream.game_name, stream.user_name, stream.title]) // DEBUG
 
             if (stream.viewer_count >= minViewers) { // if streamer has more viewers than specified in minViewers variable...
                 console.log(chalk.yellowBright(`Найден стример ${stream.user_name} который играет в ${stream.game_name} с ${stream.viewer_count} зрителями. Отсылка уведомления...`))

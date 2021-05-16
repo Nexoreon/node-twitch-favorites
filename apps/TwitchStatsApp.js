@@ -6,9 +6,9 @@ const TwitchGame = require('../models/twitchGameModel')
 const TwitchStats = require('../models/twitchStatsModel')
 const TwitchReport = require('../models/twitchReportModel')
 
-const year = new Date().getFullYear()
-const month = new Date().getMonth() + 1
-const day = new Date().getDate()
+const year = new Date().getFullYear().toString()
+const month = (new Date().getMonth() + 1).toString()
+const day = new Date().getDate().toString()
 
 // ABOUT THIS APP: This app generates report every 24 hours if local twitch stats db has data and sends user notification with the link to generated table with streams list
 const TwitchStatsApp = async () => {

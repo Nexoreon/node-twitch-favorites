@@ -62,17 +62,17 @@ exports.deleteStreamer = catchAsync(async (req, res, next) => {
 // Other
 
 exports.updateScore = catchAsync(async (req, res, next) => {
-    const year = new Date().getFullYear()
-    const month = new Date().getMonth() + 1
-
     const getStreamer = await TwitchStreamer.findById(req.body.id)
     if (!getStreamer) return next(new AppError('Такого стримера не найдено в датабазе', 404))
 
     const updateScore = await TwitchStreamer.findByIdAndUpdate(req.body.id, {
-        $push: {[`score.history.${year}.${month}`]: {
+        $push: {'score.history': {
                 points: getStreamer.score.current, 
                 changePoints: req.body.points, 
                 reason: req.body.reason, 
+                day: new Date().getDate(),
+                month: new Date().getMonth() + 1,
+                year: new Date().getFullYear(),
                 changedAt: Date.now() 
             }},
         $inc: {'score.current': req.body.points}
@@ -137,14 +137,14 @@ exports.deleteGame = catchAsync(async (req, res, next) => {
 })
 
 exports.addGameHistory = catchAsync(async (req, res, next) => {
-    const year = new Date().getFullYear()
-    const month = new Date().getMonth() + 1
-
     const game = await TwitchGame.findOneAndUpdate({id: req.body.game_id}, {
-        $push: {[`history.${year}.${month}`]: {
+        $push: {history: {
             streamer_id: req.body.user_id,
             streamer: req.body.user_login,
-            date: Date.now() 
+            day: new Date().getDate(),
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+            timestamp: Date.now() 
         }}
     }, {new: true})
     if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404))

@@ -6,9 +6,9 @@ const TwitchStreamer = require('../models/twitchStreamerModel')
 const TwitchGame = require('../models/twitchGameModel')
 const TwitchStats = require('../models/twitchStatsModel')
 
-const year = new Date().getFullYear()
-const month = new Date().getMonth() + 1
-const day = new Date().getDate()
+const year = new Date().getFullYear().toString()
+const month = (new Date().getMonth() + 1).toString()
+const day = new Date().getDate().toString()
 
 const TwitchStreamersApp = async () => {
     console.log(chalk.hex('#a970ff')('[Twitch Streamers]: Запуск проверки состояния стримов...'), new Date(Date.now()))
