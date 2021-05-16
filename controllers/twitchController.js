@@ -185,8 +185,8 @@ exports.unbanStreamer = catchAsync(async (req, res, next) => {
     })
 })
 
-exports.test = catchAsync(async (req, res, next) => {
-    console.log('success')
+exports.wakeHeroku = catchAsync(async (req, res, next) => {
+    console.log('Wake up Dyno')
 
     res.status(200).json({
         status: 'success'

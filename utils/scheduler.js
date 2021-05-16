@@ -1,7 +1,6 @@
 const { ToadScheduler, SimpleIntervalJob, Task } = require('toad-scheduler')
 const nodeScheduler = require('node-schedule')
-const chalk = require('chalk')
-const Table = require('cli-table')
+const axios = require('axios')
 
 const scheduler = new ToadScheduler()
 
@@ -19,3 +18,8 @@ scheduler.addSimpleIntervalJob(checkGames)
 
 // Twitch Stats: Checks every 24 hours for streamers stats in stats db and generates daily reports
 const generateTwitchReport = nodeScheduler.scheduleJob({ hour: 18, minute: 1, tz: 'Etc/UTC'}, TwitchStatsApp)
+
+// Heroku anti-sleep request
+const callHeroku = new SimpleIntervalJob({ minutes: 5 }, new Task('callHeroku', async () => {
+    await axios.get('https://nameless-island-28258.herokuapp.com/api/v1/twitch/heroku')
+}))

@@ -12,6 +12,6 @@ router.route('/games/:id').get(twitchController.getGame).patch(twitchController.
 router.route('/game/addHistory').patch(twitchController.addGameHistory)
 
 router.route('/banned-streamers/').get(twitchController.getBannedStreamers).post(twitchController.banStreamer).delete(twitchController.unbanStreamer)
-router.route('/test').get(twitchController.test)
+router.route('/heroku').get(twitchController.wakeHeroku)
 
 module.exports = router
