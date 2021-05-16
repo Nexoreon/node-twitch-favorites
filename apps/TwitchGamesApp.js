@@ -51,7 +51,7 @@ const TwitchGamesApp = async () => {
     
             if (expiresIn <= Date.now()) { // if ban timer expired, remove streamer from banned db
                 console.log(chalk.yellowBright(`[Twitch Games]: Таймер бана для стримера ${stream.user_name} вышел. Разблокировка...`))
-                await BannedTwitchStreamer.deleteOne({userId: stream.user_id})
+                await TwitchBanned.deleteOne({userId: stream.user_id})
             }
         }
 
