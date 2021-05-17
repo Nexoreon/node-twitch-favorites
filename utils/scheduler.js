@@ -21,6 +21,6 @@ const generateTwitchReport = nodeScheduler.scheduleJob({ hour: 18, minute: 1, tz
 
 // Heroku anti-sleep request
 const callHeroku = new SimpleIntervalJob({ minutes: 25 }, new Task('callHeroku', async () => {
-    await axios.get('https://nameless-island-28258.herokuapp.com/api/v1/twitch/heroku')
+    await axios.get('https://node-twitch-favorites.herokuapp.com/api/v1/twitch/heroku')
 }))
 scheduler.addSimpleIntervalJob(callHeroku)
