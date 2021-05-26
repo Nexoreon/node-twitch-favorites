@@ -5,6 +5,11 @@ const twitchBannedSchema = new mongoose.Schema({
     userName: String,
     game: String,
     viewers: Number,
+    permanent: {
+        type: Boolean,
+        default: false
+    },
+    reason: String,
     date: Date,
     expiresIn: Date
 })
