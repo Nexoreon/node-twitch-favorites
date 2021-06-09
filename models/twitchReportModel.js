@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
 const twitchReportSchema = new mongoose.Schema({
-    stamp: Date,
+    timestamp: Date,
     date: {
         day: Number,
         month: Number,
@@ -13,7 +13,7 @@ const twitchReportSchema = new mongoose.Schema({
 twitchReportSchema.pre('save', function(next) {
     if (!this.isNew) return next()
 
-    this.stamp = Date.now()
+    this.timestamp = Date.now()
     next()
 })
 

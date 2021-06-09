@@ -72,12 +72,13 @@ const TwitchGamesApp = async () => {
             if (!bannedStreamersIDs.includes(stream.user_id) && stream.language === 'en' || !bannedStreamersIDs.includes(stream.user_id) && stream.language === 'ru') { // make sure that streams language is russian or english
                 const gameIndex = gamesIDs.indexOf(stream.game_id) // get game id that streamer currently playing
                 const minViewers = dbGames[gameIndex].search.minViewers || 2000 // if game db field with value minViewers exists, use it instead of default 2000
-                const gameCover = dbGames[gameIndex].box_art // get game box art
-                tableArray.push([minViewers, stream.viewer_count, stream.game_name, stream.user_name, stream.title]) // DEBUG
+                const gameCover = dbGames[gameIndex].boxArt // get game box art
+                if (stream.viewer_count >= 250) {
+                    tableArray.push([minViewers, stream.viewer_count, stream.game_name, stream.user_name, stream.title]) // DEBUG
+                }
     
                 if (stream.viewer_count >= minViewers) { // if streamer has more viewers than specified in minViewers variable...
                     console.log(chalk.yellowBright(`Найден стример ${stream.user_name} который играет в ${stream.game_name} с ${stream.viewer_count} зрителями. Отсылка уведомления...`))
-                    tableArray.push([minViewers, stream.viewer_count, stream.game_name, stream.user_name, stream.title]) // add stream to the table list
                     pushNotification.publishToInterests(['project'], { // push notification to users
                         web: {
                             notification: {
@@ -91,7 +92,8 @@ const TwitchGamesApp = async () => {
         
                     await TwitchGame.findOneAndUpdate({id: stream.game_id}, { // add mark about this event to the game doc
                         $push: { history: {
-                            streamer_id: stream.user_id,
+                            streamId: stream.id,
+                            streamerId: stream.user_id,
                             streamer: stream.user_login,
                             viewers: stream.viewer_count,
                             favorite: false,
@@ -115,7 +117,11 @@ const TwitchGamesApp = async () => {
         })
     
         table.push(...tableArray)
-        console.log(table.toString())
+        if (table.length) {
+            console.log(table.toString())
+        } else {
+            console.log(chalk.yellowBright('[Twitch Games]: Подходящих по критериям стримов не найдено! Таблица составлена не будет'))
+        }
     } catch (err) {
         console.log(chalk.red('[Twitch Games]: Произошла ошибка во время выполнения приложения! Операция отменена.'), err)
     }

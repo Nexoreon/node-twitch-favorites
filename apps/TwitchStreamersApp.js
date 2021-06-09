@@ -20,6 +20,7 @@ const TwitchStreamersApp = async () => {
         const gamesIDs = games.map(game => game.id)
         const following = await TwitchStreamer.find() // get streamers from db
         const followingIDs = following.map(streamer => `user_id=${streamer.id}`) // extract streamers id
+        let foundStreams = false
         let twitchResponse
     
         try {
@@ -60,6 +61,7 @@ const TwitchStreamersApp = async () => {
     
                 if (!following[findIndex].cooldown) { // if streamer doesn't have a cooldown...
                     console.log(chalk.green(`[Twitch Streamers]: Стример ${streamer.user_name} играет в ${streamer.game_name}. Отправка уведомления...`))
+                    foundStreams = true
                     pushNotification.publishToInterests(['project'], { // push notification to users
                         web: {
                             notification: {
@@ -88,6 +90,7 @@ const TwitchStreamersApp = async () => {
                 }
             }
         })
+        if (foundStreams) console.log(chalk.hex('#a970ff')('[Twitch Streamers]: Подходящих по критериям стримов не найдено'))
     } catch (err) {
         console.log(chalk.red('[Twitich Streamers]: Произошла ошибка во время получения данных! Операция отменена.', err))
     }

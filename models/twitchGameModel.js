@@ -10,7 +10,6 @@ const twitchGameSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Имя игры должно быть заполнено']
     },
-    box_art: String,
     boxArt: String,
     search: {
         isSearchable: {
