@@ -11,11 +11,11 @@ mongoose.connect(process.env.DB_URL, {
     useNewUrlParser: true,
     useFindAndModify: true,
 })
-.then(() => console.log('Успешное соединение с датабазой!'))
-.catch(err => console.log('Ошибка соединения с датабазой!', err))
+.then(() => console.log('Successeful connection to database!'))
+.catch(err => console.log('Error while connecting to dabase!', err))
 
 const server = app.listen(process.env.PORT || 5000, () => {
-    console.log(`Сервер запущен и прослушивается на порте: ${process.env.PORT}`)
+    console.log(`Server has been launched and listening on port: ${process.env.PORT}`)
 })
 
 process.on('unhandledRejection', err => {
