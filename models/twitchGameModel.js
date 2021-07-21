@@ -3,12 +3,12 @@ const mongoose = require('mongoose')
 const twitchGameSchema = new mongoose.Schema({
     id: {
         type: String,
-        required: [true, 'ID игры должно быть заполнено'],
-        unique: [true, 'Такая игра уже существует в датабазе']
+        required: [true, 'Game ID is required'],
+        unique: [true, 'This game already exists in db']
     },
     name: {
         type: String,
-        required: [true, 'Имя игры должно быть заполнено']
+        required: [true, 'Game name is required']
     },
     boxArt: String,
     search: {

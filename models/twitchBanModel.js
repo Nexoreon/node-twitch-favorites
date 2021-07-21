@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-const twitchBannedSchema = new mongoose.Schema({
+const twitchBanSchema = new mongoose.Schema({
     userId: String,
     userName: String,
     game: String,
@@ -11,15 +11,15 @@ const twitchBannedSchema = new mongoose.Schema({
     },
     reason: String,
     date: Date,
-    expiresIn: Date
+    expiresIn: Date,
 })
 
-twitchBannedSchema.pre('save', function(next) {
+twitchBanSchema.pre('save', function(next) {
     if (!this.isNew) return next()
     this.date = Date.now()
     next()
 })
 
-const TwitchBanned = mongoose.model('ma_twitch-ban', twitchBannedSchema)
+const TwitchBan = mongoose.model('ma_twitch-ban', twitchBanSchema)
 
-module.exports = TwitchBanned
+module.exports = TwitchBan
