@@ -1,7 +1,7 @@
 {
-  "name": "twitch-apps",
-  "version": "1.0.0",
-  "description": "",
+  "name": "node-twitch-favorites",
+  "version": "2.0.0",
+  "description": "Three small node applications that allows you to get notifications when your favorite streamer or random streamers plays your favorite games",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -22,5 +22,8 @@
     "node-schedule": "^2.0.0",
     "nodemon": "^2.0.7",
     "toad-scheduler": "^1.0.2"
+  },
+  "engines": {
+    "node": ">=15.14.0"
   }
 }

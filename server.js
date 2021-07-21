@@ -24,3 +24,10 @@ process.on('unhandledRejection', err => {
         process.exit(1)
     })
 })
+
+process.on('SIGTERM', () => { // required in Heroku, since servers restarts every 24 hours
+    console.log('SIGTERM RECEIVED! Shutting down...')
+    server.close(() => {
+        process.exit(1)
+    })
+})
