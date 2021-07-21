@@ -18,42 +18,42 @@ sendProdErrors = (err, res) => {
         })
     } else {
         res.status(500).json({
-            status: 'Ошибка',
-            message: 'Что-то пошло не так'
+            status: 'Error',
+            message: 'Something went wrong'
         })
     }
 }
 
 const handleCastErrorDB = err => {
-    const message = `Неправильный путь для: ${err.path}. Указанный путь: ${err.value}`
+    const message = `Wrong path for: ${err.path}. Selected path: ${err.value}`
     return new AppError(message, 404)
 }
 
 const handleDuplicateFieldsDB = err => {
     const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0]
-    const message = `Обнаружен дубликат значения: ${value}. Пожалуйста, используйте другое значение`
+    const message = `Found duplicate: ${value}. Please, use another value`
     return new AppError(message, 400)
 }
 
 const handleValidationErrorDB = err => {
     const errors = Object.values(err.errors).map(val => val.message)
-    const message = `Неправильно введенные данные. ${errors.join('. ')}`
+    const message = `Incorrect data. ${errors.join('. ')}`
     return new AppError(message, 400)
 }
 
 const handleJWTError = err => { // Для JWT
-    return new AppError('Невалидный токен. Пожалуйста переавторизируйтесь!', 401)
+    return new AppError('Invalid token. Please reauthorize!', 401)
 }
 
 const handleJWTExpiredError = err => {
-    return new AppError('Ваш токен авторизации истёк! Пожалуйста переавторизируйтесь', 401)
+    return new AppError('Your token has expired! Please reauthorize', 401)
 }
 
 
 
-module.exports = (err, req, res, next) => { // При присутствие параметра err, express определяет этот хэндлер как обработчик ошибок
-    err.statusCode = err.statusCode || 500 // Если передается statusCode, то оставляем. Если нет то по умолчанию номер ошибки 500
-    err.status = err.status || 'error' // Если передается статус ошибки, то оставляем. Если нет то по умолчанию статус 'fail'
+module.exports = (err, req, res, next) => {
+    err.statusCode = err.statusCode || 500
+    err.status = err.status || 'error'
     
     if (err.name === 'CastError') err = handleCastErrorDB(err)
     if (err.code === 11000) err = handleDuplicateFieldsDB(err)
