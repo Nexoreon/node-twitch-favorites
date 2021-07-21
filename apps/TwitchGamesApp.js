@@ -57,7 +57,7 @@ const TwitchGamesApp = async () => {
                     'client-id': process.env.TWITCH_CLIENT
                 }
             })
-            console.log(chalk.yellowBright('[Twitch Games]: successefully got streams data. Processing...'))
+            console.log(chalk.yellowBright('[Twitch Games]: Successefully got streams data. Processing...'))
     
             twitchResponse = askTwitch.data.data // set fetched data from twitch api (fetched data contains streamers that are currently playing previously specified games)
         } catch (e) {
