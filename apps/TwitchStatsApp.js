@@ -1,28 +1,22 @@
 const chalk = require('chalk')
 const Table = require('cli-table')
-const pushNotification = require('../utils/pushNotification')
 
 const TwitchGame = require('../models/twitchGameModel')
 const TwitchStats = require('../models/twitchStatsModel')
 const TwitchReport = require('../models/twitchReportModel')
-
-const year = new Date().getFullYear().toString()
-const month = (new Date().getMonth() + 1).toString()
-const day = new Date().getDate().toString()
+const { sendNotification } = require('./TwitchCommon')
 
 // ABOUT THIS APP: This app generates report every 24 hours if local twitch stats db has data and sends user notification with the link to generated table with streams list
 const TwitchStatsApp = async () => {
-    console.log(chalk.greenBright('[Twitch Stats]: Запуск составления ежедневного отчёта по стримам...'))
+    console.log(chalk.greenBright('[Twitch Stats]: Launching report creation tool...'))
     try {
         const stats = await TwitchStats.find() // get twitch stats from db
+        if (!stats.length) return console.log(chalk.greenBright("[Twitch Stats]: No records found in database! Table isn't going to be created")) // if stats has no data, return nothing
         const games = await TwitchGame.find() // get favorite games from db
         const gamesIDs = games.map(game => game.id) // extract ids from games db
-    
-        if (!stats.length) return console.log(chalk.greenBright('[Twitch Stats]: Нету стримов для показа! Таблица сгенерирована не будет')) // if stats has no data, return nothing
-    
         const tableArray = [] // array that going to be filled with data for the table
         const table = new Table({ // generate table columns
-            head: ['Мин. зрителей', 'Зрителей', 'Игра', 'Стример', 'Заголовок'],
+            head: ['Min. viewers', 'Viewers', 'Game', 'Streamer', 'Title'],
             colWidths: [15, 10, 35, 25, 25]
         })
     
@@ -40,34 +34,26 @@ const TwitchStatsApp = async () => {
                 timestamp: stream.date 
             })
         })
-        console.log(chalk.greenBright('[Twitch Stats]: Ежедневный отчёт о стримах готов! Добавление в датабазу...'))
+        console.log(chalk.greenBright('[Twitch Stats]: Everyday report is ready! Adding in database...'))
     
         await TwitchReport.create({ // creates daily report with handled data
-            date: {
-                day: day,
-                month: month,
-                year: year
-            },
+            timestamp: Date.now(),
             streams: statsArray
-        }).then(() => console.log(chalk.greenBright('[Twitch Stats]: Отчёт был добавлен в датабазу. Генерация таблицы...'))).catch(e => console.log(chalk.red('[Twitch Stats]: Ошибка отправки отчёта в датабазу!'), e))
+        }).then(() => console.log(chalk.greenBright('[Twitch Stats]: The report has been added in database. Generating table...'))).catch(e => console.log(chalk.red('[Twitch Stats]: Error while adding report in database!'), e))
     
         table.push(...tableArray) // generates table
-        console.log(chalk.greenBright('[Twitch Stats]: Таблица успешно сгенерирована. Вывод таблицы и отсылка уведомления...'))
-        pushNotification.publishToInterests(['project'], { // push notification to users
-            web: {
-                notification: {
-                    title: 'Отчёт о стримах готов',
-                    body: `Ежедневный отчёт о стримах за день готов! Просмотри сейчас...`,
-                    icon: 'https://192.168.0.100/site/MiniApps/TwitchStreamers/icon.jpg'
-                }
-            }
-        }).then(() => console.log(chalk.greenBright('[Twitch Stats]: Уведомление успешно отравлено!'))).catch(e => console.log(chalk.red('[Twitch Stats: Ошибка отправки уведомления!'), e))
-    
+        console.log(chalk.greenBright('[Twitch Stats]: The table has been successefully generated. Showing table and sending notification...'))
+        sendNotification({
+            title: 'Streams report is ready',
+            message: `Everyday report is ready! Take a look...`,
+            icon: 'https://192.168.0.100/site/MiniApps/TwitchStreamers/icon.jpg', // TODO to be included with the project
+            link: 'https://192.168.0.100/database/dist/mini-apps/twitch-hub' // TODO include frontend application and link
+        })
+        
         console.log(table.toString())
-    
         await TwitchStats.deleteMany({}) // deletes all day stats
     } catch (err) {
-        console.log(chalk.red('[Twitch Stats]: Произошла ошибка составления отчёта! Отмена операции.'), err)
+        console.log(chalk.red('[Twitch Stats]: Error while creating report! Cancelling operation.'), err)
     }
 }
 
