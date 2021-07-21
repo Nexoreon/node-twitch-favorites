@@ -37,5 +37,5 @@ exports.sendNotification = ({title, message, link, icon}) => {
                 icon
             }
         }
-    }).then(() => console.log('[Pusher]: Уведомление успешно отравлено!')).catch(e => console.log(chalk.red('[Pusher]: Ошибка отправки уведомления!'), e))
+    }).then(() => console.log('[Pusher]: Notification has been successefully sent!')).catch(e => console.log(chalk.red('[Pusher]: Error while sending notification!'), e))
 }
