@@ -14,7 +14,7 @@ app.use(morgan('dev'))
 app.use(cors())
 app.use('/api/v1/twitch', twitchRoutes)
 app.all('*', (req, res, next) => {
-    next(new AppError(`Невозможно найти ${req.originalUrl} на сервере`, 404))
+    next(new AppError(`Unable to find ${req.originalUrl} on the server`, 404))
 })
 app.use(globalErrorHandler)
 

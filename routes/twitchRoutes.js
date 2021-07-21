@@ -1,17 +1,22 @@
 const express = require('express')
-const twitchController = require('../controllers/twitchController')
+const TwitchStreamersController = require('../controllers/TwitchStreamersController')
+const TwitchGamesController = require('../controllers/TwitchGamesController')
+const TwitchBansController = require('../controllers/TwitchBansController')
+const TwitchReportsController = require('../controllers/TwitchReportsController')
 
 const router = express.Router()
 
-router.route('/').get(twitchController.getStreamers).post(twitchController.createStreamer)
-router.route('/streamers/:id').get(twitchController.getStreamer).patch(twitchController.updateStreamer).delete(twitchController.deleteStreamer)
-router.route('/streamer/updateScore').patch(twitchController.updateScore)
+router.route('/').get(TwitchStreamersController.getStreamers).post(TwitchStreamersController.createStreamer)
+router.route('/streamers/:id').get(TwitchStreamersController.getStreamer).patch(TwitchStreamersController.updateStreamer).delete(TwitchStreamersController.deleteStreamer)
+router.route('/streamer/updateScore').patch(TwitchStreamersController.updateScore)
 
-router.route('/games').get(twitchController.getAllGames).post(twitchController.createGame)
-router.route('/games/:id').get(twitchController.getGame).patch(twitchController.updateGame).delete(twitchController.deleteGame)
-router.route('/game/addHistory').patch(twitchController.addGameHistory)
+router.route('/games').get(TwitchGamesController.getAllGames).post(TwitchGamesController.createGame)
+router.route('/games/:id').get(TwitchGamesController.getGame).patch(TwitchGamesController.updateGame).delete(TwitchGamesController.deleteGame)
+router.route('/game/addHistory').patch(TwitchGamesController.addGameHistory)
 
-router.route('/banned-streamers/').get(twitchController.getBannedStreamers).post(twitchController.banStreamer).delete(twitchController.unbanStreamer)
-router.route('/heroku').get(twitchController.wakeHeroku)
+router.route('/reports').get(TwitchReportsController.getReports)
+
+router.route('/banned-streamers/').get(TwitchBansController.getBannedStreamers).post(TwitchBansController.banStreamer)
+router.route('/banned-streamers/:id').get(TwitchBansController.getBannedStreamer).delete(TwitchBansController.unbanStreamer).patch(TwitchBansController.editBan)
 
 module.exports = router
