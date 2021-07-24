@@ -65,7 +65,7 @@ const TwitchGamesApp = async () => {
         }
     
         twitchResponse.map(async stream => { // map all streams
-            if (!bannedStreamersIDs.includes(stream.user_id) || !favoriteStreamersIDs.includes(stream.user_id)) { // if streamer id is in the banned list or favorite list skip him
+            if (!bannedStreamersIDs.includes(stream.user_id) && !favoriteStreamersIDs.includes(stream.user_id)) { // if streamer id is in the banned list or favorite list skip him
                 if (!streamersStatsIDs.includes(stream.user_id) && stream.language === 'en' && stream.viewer_count >= 1000 || !streamersStatsIDs.includes(stream.user_id) && stream.language === 'ru' && stream.viewer_count >= 2000) {
                     createStats(stream)
                 }
