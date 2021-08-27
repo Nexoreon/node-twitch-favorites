@@ -6,11 +6,7 @@ process.on('uncaughtException', err => {
     process.exit(1)
 })
 
-mongoose.connect(process.env.DB_URL, {
-    useCreateIndex: true,
-    useNewUrlParser: true,
-    useFindAndModify: true,
-})
+mongoose.connect(process.env.DB_URL)
 .then(() => console.log('Successeful connection to database!'))
 .catch(err => console.log('Error while connecting to dabase!', err))
 
