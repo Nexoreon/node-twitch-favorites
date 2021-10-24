@@ -9,10 +9,9 @@ const TwitchStreamer = require('../models/twitchStreamerModel')
 const { updateGameHistory, createStats, sendNotification } = require('./TwitchCommon')
 
 const checkBannedStreamers = async () => { // checks if banned streamer timer expired
-    const unbanExpired = await TwitchBan.deleteMany({permanent: false, expiresIn: {$lte: Date.now()}})
-    if (unbanExpired.deletedCount > 0) {
-        console.log(chalk.yellowBright(`[Twitch Games]: ${unbanExpired.deletedCount} has been unbanned since ban timer expired`))
-    }
+    await TwitchBan.deleteMany({permanent: false, expiresIn: {$lte: Date.now()}})
+    .then(unbanned => unbanned.deletedCount ? console.log(chalk.yellowBright(`[Twitch Games]: ${unbanExpired.deletedCount} has been unbanned since ban timer expired`)) : null)
+    .catch(err => console.log(chalk.red('[Twitch Games]: Error happened while executing application! Canceling operation.'), err))
 }
 
 const banStreamer = async stream => {
@@ -73,7 +72,7 @@ const TwitchGamesApp = async () => {
                 if (!bannedStreamersIDs.includes(stream.user_id) && stream.language === 'en') { // make sure that streams language is english
                     const gameIndex = gamesIDs.indexOf(stream.game_id) // get game id that streamer currently playing
                     const minViewers = dbGames[gameIndex].search.minViewers || 2000 // if game db field with value minViewers exists, use it instead of default 2000
-                    const gameCover = dbGames[gameIndex].boxArt // get game box art
+                    const gameCover = dbGames[gameIndex].boxArt.replace('XSIZExYSIZE', '100x140') // get game box art
                     if (stream.viewer_count >= 250) {
                         tableArray.push([minViewers, stream.viewer_count, stream.game_name, stream.user_name, stream.title])
                     }

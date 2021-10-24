@@ -1,11 +1,9 @@
 const TwitchStreamer = require('../models/twitchStreamerModel')
 const catchAsync = require('../utils/catchAsync')
-const APIFeatures = require('../utils/apiFeatures')
 const AppError = require('../utils/appError')
 
 exports.getStreamers = catchAsync(async (req, res, next) => {
-    const features = new APIFeatures(TwitchStreamer.find(), req.query).filter().sort().limitFields()
-    const streamers = await features.query
+    const streamers = await TwitchStreamer.find().sort({ 'score.current': -1, name: -1 })
 
     res.status(200).json({
         status: 'success',
@@ -66,10 +64,7 @@ exports.updateScore = catchAsync(async (req, res, next) => {
         $push: {'score.history': {
                 points: getStreamer.score.current, 
                 changePoints: req.body.points, 
-                reason: req.body.reason, 
-                day: new Date().getDate(),
-                month: new Date().getMonth() + 1,
-                year: new Date().getFullYear(),
+                reason: req.body.reason,
                 changedAt: Date.now() 
             }},
         $inc: {'score.current': req.body.points}
