@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@pusher/push-notifications-server": "^1.2.3",
-    "axios": "^0.23.0",
+    "axios": "^0.24.0",
     "chalk": "^4.1.1",
     "cli-table": "^0.3.6",
     "cors": "^2.8.5",
