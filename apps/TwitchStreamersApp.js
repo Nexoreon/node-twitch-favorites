@@ -15,7 +15,7 @@ const banStreamer = async user_id => {
 
 const checkBannedStreamers = async () => {
     await TwitchStreamer.updateMany({cooldown: {$exists: true, $lte: Date.now()}}, {$unset: {cooldown: ''}})
-    .then(banned => banned.modifiedCount ? console.log(chalk.hex('#a970ff')(`[Twitch Streamers]: ${bannedStreamers.modifiedCount} favorite streamers have been unbanned since ban timer expired`)) : null)
+    .then(banned => banned.modifiedCount ? console.log(chalk.hex('#a970ff')(`[Twitch Streamers]: ${banned.modifiedCount} favorite streamers have been unbanned since ban timer expired`)) : null)
     .catch(err => console.log(chalk.red('[Twitich Streamers]: Error while executing application! Operation has been cancelled.', err)))
 }
 
