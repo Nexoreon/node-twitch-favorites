@@ -10,7 +10,7 @@ const { updateGameHistory, createStats, sendNotification } = require('./TwitchCo
 
 const checkBannedStreamers = async () => { // checks if banned streamer timer expired
     await TwitchBan.deleteMany({permanent: false, expiresIn: {$lte: Date.now()}})
-    .then(unbanned => unbanned.deletedCount ? console.log(chalk.yellowBright(`[Twitch Games]: ${unbanExpired.deletedCount} has been unbanned since ban timer expired`)) : null)
+    .then(unbanned => unbanned.deletedCount ? console.log(chalk.yellowBright(`[Twitch Games]: ${unbanned.deletedCount} has been unbanned since ban timer expired`)) : null)
     .catch(err => console.log(chalk.red('[Twitch Games]: Error happened while executing application! Canceling operation.'), err))
 }
 
