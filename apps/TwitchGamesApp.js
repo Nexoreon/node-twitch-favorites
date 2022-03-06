@@ -73,7 +73,7 @@ const TwitchGamesApp = async () => {
                     const gameIndex = gamesIDs.indexOf(stream.game_id) // get game id that streamer currently playing
                     const minViewers = dbGames[gameIndex].search.minViewers || 2000 // if game db field with value minViewers exists, use it instead of default 2000
                     const gameCover = dbGames[gameIndex].boxArt.replace('XSIZExYSIZE', '100x140') // get game box art
-                    if (stream.viewer_count >= 250) {
+                    if (stream.viewer_count >= 1000) {
                         tableArray.push([minViewers, stream.viewer_count, stream.game_name, stream.user_name, stream.title])
                     }
         
