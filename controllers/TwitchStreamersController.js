@@ -2,6 +2,10 @@ const TwitchStreamer = require('../models/twitchStreamerModel')
 const catchAsync = require('../utils/catchAsync')
 const AppError = require('../utils/appError')
 
+const { checkActiveGame } = require('../apps/TwitchCommon')
+const { ToadScheduler, SimpleIntervalJob, Task } = require('toad-scheduler')
+const scheduler = new ToadScheduler()
+
 exports.getStreamers = catchAsync(async (req, res, next) => {
     const streamers = await TwitchStreamer.find().sort({ 'score.current': -1, name: -1 })
 
@@ -73,5 +77,29 @@ exports.updateScore = catchAsync(async (req, res, next) => {
     res.status(200).json({
         status: 'success',
         data: updateScore
+    })
+})
+
+exports.notifyOnNextGame = catchAsync(async (req, res, next) => {
+    const { id } = req.query
+    const { game } = req.body
+
+    await TwitchStreamer.findOneAndUpdate({ id }, {$set: { // allows to re-add task if server been restarted
+        gameName: game,
+        'flags.notifyOnNextGame': true
+    }})
+
+    scheduler.removeById('checkActiveGame') // remove job with this id if exists to avoid conflict
+    const task = new Task('checkActiveGame', () => {
+        checkActiveGame(id, () => scheduler.removeById('checkActiveGame'))
+    })
+
+    const scheduledTask = new SimpleIntervalJob({ // execute task every 5 minutes
+        minutes: 5
+    }, task, 'checkActiveGame')
+    scheduler.addSimpleIntervalJob(scheduledTask)
+
+    res.status(200).json({
+        status: 'ok'
     })
 })
