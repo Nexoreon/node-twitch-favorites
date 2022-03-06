@@ -6,7 +6,7 @@ const TwitchGame = require('../models/twitchGameModel')
 const TwitchBan = require('../models/twitchBanModel')
 const TwitchStats = require('../models/twitchStatsModel')
 const TwitchStreamer = require('../models/twitchStreamerModel')
-const { updateGameHistory, createStats, sendNotification } = require('./TwitchCommon')
+const { updateGameHistory, createStats, sendNotification, createVodSuggestion } = require('./TwitchCommon')
 
 const checkBannedStreamers = async () => { // checks if banned streamer timer expired
     await TwitchBan.deleteMany({permanent: false, expiresIn: {$lte: Date.now()}})
@@ -84,6 +84,11 @@ const TwitchGamesApp = async () => {
                             message: `${stream.user_name} plays ${stream.game_name} with ${stream.viewer_count} viewers`,
                             link: `https://twitch.tv/${stream.user_login}`,
                             icon: gameCover
+                        })
+                        createVodSuggestion({
+                            user_id: stream.user_id,
+                            games: [stream.game_name],
+                            thumbnail: stream.thumbnail_url
                         })
                         updateGameHistory({stream, isFavorite: false})
                         banStreamer(stream)
