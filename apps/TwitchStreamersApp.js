@@ -5,7 +5,7 @@ const pushNotification = require('../utils/pushNotification')
 const TwitchStreamer = require('../models/twitchStreamerModel')
 const TwitchGame = require('../models/twitchGameModel')
 const TwitchStats = require('../models/twitchStatsModel')
-const { createStats, updateGameHistory, sendNotification } = require('./TwitchCommon')
+const { createStats, updateGameHistory, sendNotification, createVodSuggestion } = require('./TwitchCommon')
 
 const banStreamer = async user_id => {
     await TwitchStreamer.findOneAndUpdate({id: user_id}, { // set a cooldown for 6 hours
@@ -65,6 +65,11 @@ const TwitchStreamersApp = async () => {
                         message: `${streamer.user_name} plays ${streamer.game_name}`,
                         link: `https://twitch.tv/${streamer.user_login}`,
                         icon: streamer.avatar
+                    })
+                    createVodSuggestion({
+                        user_id: streamer.user_id,
+                        games: [streamer.game_name],
+                        thumbnail: streamer.thumbnail_url
                     })
                     updateGameHistory({stream: streamer, isFavorite: true})
                     banStreamer(streamer.user_id)
