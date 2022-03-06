@@ -54,6 +54,6 @@ const twitchWatchlistSchema = new mongoose.Schema({
     }
 })
 
-const TwitchWatchlist = remoteDB.model('ma_twitch-watchlist', twitchWatchlistSchema)
+const TwitchWatchlist = mongoose.model('ma_twitch-watchlist', twitchWatchlistSchema)
 
 module.exports = TwitchWatchlist
