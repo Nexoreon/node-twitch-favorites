@@ -26,6 +26,13 @@ const twitchStreamerSchema = new mongoose.Schema({
         },
         history: Array
     },
+    flags: {
+        notifyOnNextGame: {
+            type: Boolean,
+            default: false
+        }
+    },
+    gameName: String,
     cooldown: Date
 })
 
