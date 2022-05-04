@@ -33,13 +33,13 @@ exports.getBannedStreamer = catchAsync(async (req, res, next) => {
 })
 
 exports.editBan = catchAsync(async (req, res, next) => {
-    const { date, permanent} = req.body
-    const bannedStreamer = await TwitchBan.findByIdAndUpdate(req.params.id, {expiresIn: date, permanent}, {new: true})
+    const { date, permanent, reason } = req.body
+    const bannedStreamer = await TwitchBan.findByIdAndUpdate(req.params.id, { expiresIn: date, permanent, reason }, {new: true})
     if (!bannedStreamer) return next(new AppError("This streamer isn't on the ban list!", 404))
 
     res.status(200).json({
         status: 'success',
-        message: 'Successefully edited ban details'
+        message: 'Successfully edited ban details'
     })
 })
 
