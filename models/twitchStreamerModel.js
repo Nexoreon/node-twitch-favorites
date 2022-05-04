@@ -15,23 +15,13 @@ const twitchStreamerSchema = new mongoose.Schema({
         required: [true, 'Streamer nickname is required']
     },
     avatar: String,
-    score: {
-        isDisabled: {
-            type: Boolean,
-            default: false
-        },
-        current: {
-            type: Number,
-            default: 0
-        },
-        history: Array
-    },
     flags: {
         notifyOnNextGame: {
             type: Boolean,
             default: false
         }
     },
+    streamHistory: [String],
     gameName: String,
     cooldown: Date
 })
