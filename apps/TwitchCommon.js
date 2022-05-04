@@ -77,7 +77,7 @@ exports.createVodSuggestion = async ({ user_id, thumbnail, games }) => {
     })
 }
 
-exports.checkActiveGame = async (id, removeJob) => {
+exports.checkActiveGame = async (id, removeJob, everyGame) => {
     const removeNotifyingData = async () => {
         await TwitchStreamer.findOneAndUpdate({ id }, {
             $set: { 'flags.notifyOnNextGame': false },
@@ -85,6 +85,12 @@ exports.checkActiveGame = async (id, removeJob) => {
         })
         removeJob()
     }
+
+    const updateCurrentGame = async game => {
+        await TwitchStreamer.findOneAndUpdate({ id }, {
+            $set: { gameName: game }
+        });
+    };
 
     const streamer = await TwitchStreamer.findOne({ id }).select({ gameName: 1, avatar: 1 })
     const response = await axios.get(`https://api.twitch.tv/helix/streams?user_id=${id}`, {
@@ -100,10 +106,21 @@ exports.checkActiveGame = async (id, removeJob) => {
         return removeNotifyingData()
     }
 
+    if (everyGame && streamData.game_name !== streamer.gameName) {
+        console.log('[Twitch Streamers]: Streamer started playing another game. Sending notification...');
+        this.sendNotification({
+            title: `${streamData.user_name} started playing next game`,
+            message: `Streamer ${streamData.user_name} started playing ${streamData.game_name}`,
+            icon: streamer.avatar,
+            link: `https://twitch.tv/${streamData.user_login}`      
+        });
+        return updateCurrentGame(streamData.game_name);
+    }
+
     if (streamData.game_name !== streamer.gameName) { // if streamer changed the game, send notification and remove this job
         console.log('[Twitch Streamers]: Streamer started playing another game. Sending notification...')
         this.sendNotification({
-            title: `${streamData.user_name} started playing another game`,
+            title: `${streamData.user_name} started playing next game`,
             message: `Streamer ${streamData.user_name} started playing ${streamData.game_name}`,
             icon: streamer.avatar,
             link: `https://twitch.tv/${streamData.user_login}`      
