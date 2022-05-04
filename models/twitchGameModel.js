@@ -18,6 +18,7 @@ const twitchGameSchema = new mongoose.Schema({
         },
         minViewers: {
             type: Number,
+            default: 2000
         }
     },
     history: Array
