@@ -3,8 +3,14 @@ const mongoose = require('mongoose')
 const twitchWatchlistSchema = new mongoose.Schema({
     id: {
         type: String,
-        required: [true, 'Vod should have ID from Twitch'],
+        required: [true, 'Vod should have ID from platform'],
         unique: [true, 'This vod already been added before']
+    },
+    platform: {
+        type: String,
+        enum: ['Twitch', 'YouTube'],
+        required: [true, 'Specify platform of the video'],
+        default: 'Twitch'
     },
     title: {
         type: String,
