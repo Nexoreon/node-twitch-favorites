@@ -5,7 +5,8 @@ const twitchReportSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    streams: Array
+    streams: Array,
+    follows: Array
 })
 
 const TwitchReport = mongoose.model('ma_twitch-report', twitchReportSchema)
