@@ -1,2 +1,4 @@
 node_modules
 config1.env
+heroku-launch.bat
+heroku-stop.bat
