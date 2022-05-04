@@ -8,7 +8,7 @@ const TwitchStreamersApp = require('../apps/TwitchStreamersApp')
 const TwitchGamesApp = require('../apps/TwitchGamesApp')
 const TwitchStatsApp = require('../apps/TwitchStatsApp')
 
-// Twitch Streamers: Checks every 10 minutes if streamers i follow plays favorite game
+// Twitch Streamers: Checks every 15 minutes if streamers i follow plays favorite game
 const checkStreams = new SimpleIntervalJob({ minutes: process.env.APP_STREAMERS_TIMER }, new Task('checkStreams', TwitchStreamersApp))
 scheduler.addSimpleIntervalJob(checkStreams)
 
@@ -17,7 +17,7 @@ const checkGames = new SimpleIntervalJob({ minutes: process.env.APP_GAMES_TIMER 
 scheduler.addSimpleIntervalJob(checkGames)
 
 // Twitch Stats: Checks every 24 hours for streamers stats in stats db and generates daily reports
-const generateTwitchReport = nodeScheduler.scheduleJob({ hour: 18, minute: 1, tz: 'Etc/UTC'}, TwitchStatsApp)
+const generateTwitchReport = nodeScheduler.scheduleJob({ hour: 20, minute: 59, tz: 'Etc/UTC'}, TwitchStatsApp)
 
 // Heroku anti-sleep request
 const wakeHeroku = new SimpleIntervalJob({ minutes: 25 }, new Task('wakeHeroku', async () => {
