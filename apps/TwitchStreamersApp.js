@@ -19,8 +19,13 @@ const checkBannedStreamers = async () => {
     .catch(err => console.log(chalk.red('[Twitich Streamers]: Error while executing application! Operation has been cancelled.', err)))
 }
 
-// MAIN PART
+const addToStreamHistory = async (userId, gameName) => {
+    await TwitchStreamer.updateOne({ id: userId }, {
+        $addToSet: { streamHistory: gameName }
+    })
+}
 
+// MAIN PART
 const TwitchStreamersApp = async () => {
     console.log(chalk.hex('#a970ff')('[Twitch Streamers]: Launching favorite streamers check...', new Date(Date.now()).toLocaleString()))
     try {
@@ -49,15 +54,18 @@ const TwitchStreamersApp = async () => {
         }
     
         twitchResponse.map(async streamer => { // handle received array of live streams
+            const index = following.map(str => str.id).indexOf(streamer.user_id) // find array index of streamer
+            const streamerData = following[index]
+
+            if (!streamerData.streamHistory.includes(streamer.game_name) && streamer.game_name !== 'Just Chatting') addToStreamHistory(streamer.user_id, streamer.game_name)
             if (gamesIDs.includes(streamer.game_id)) { // if streamer plays one of the favorite games...
-                const findIndex = following.map(str => str.id).indexOf(streamer.user_id) // find array index of streamer
-                streamer.avatar = following[findIndex].avatar // set streamer avatar from db
+                streamer.avatar = following[index].avatar // set streamer avatar from db
     
                 if (!streamersStatsIDs.includes(streamer.user_id)) {
                     createStats(streamer)
                 }
     
-                if (!following[findIndex].cooldown) { // if streamer doesn't have a cooldown...
+                if (!following[index].cooldown) { // if streamer doesn't have a cooldown...
                     console.log(chalk.green(`[Twitch Streamers]: Streamer ${streamer.user_name} plays ${streamer.game_name}. Sending notification...`))
                     foundStreams = true
                     sendNotification({
