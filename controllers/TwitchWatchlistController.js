@@ -64,47 +64,75 @@ exports.getVideos = catchAsync(async (req, res, next) => {
 
 exports.addVideo = catchAsync(async (req, res, next) => {
     const { url } = req.body
-    const splitedUrl = url.split('/')
-    const videoId = splitedUrl[splitedUrl.length - 1]
-    
-    await axios.get(`https://api.twitch.tv/helix/videos?id=${videoId}`, { // get video info
-        headers: twitchHeaders
-    })
-    .then(async resp => {
-        const vidInfo = resp.data.data[0]
-        const duration = convertDuration(vidInfo.duration)
+    let splitedUrl = url.split('/')
+    let videoId = splitedUrl[splitedUrl.length - 1]
 
-        req.body = {
-            ...req.body,
-            id: videoId,
-            title: vidInfo.title,
-            author: vidInfo.user_name,
-            thumbnail: vidInfo.thumbnail_url,
-            duration
-        }
-
-        await axios.get(`https://api.twitch.tv/helix/users/follows?to_id=${vidInfo.user_id}&first=1`, { // then get follows info
-            headers: twitchHeaders
-        }).then(user => {
+    if (url.includes('youtube')) {
+        splitedUrl = url.split('=')
+        videoId = splitedUrl[1]
+        await axios.get(`https://www.googleapis.com/youtube/v3/videos?key=${process.env.YOUTUBE_API_KEY}&id=${videoId}&part=snippet,contentDetails`)
+        .then(async resp => {
+            const video = resp.data.items[0];
+            const vidInfo = video.snippet;
+            const duration = video.contentDetails.duration.replace('PT', '').replace('H', ':').replace('M', ':').replace('S', "");
+            
             req.body = {
                 ...req.body,
+                id: videoId,
+                platform: 'YouTube',
+                title: vidInfo.title,
+                author: vidInfo.channelTitle,
+                thumbnail: vidInfo.thumbnails.medium.url,
                 meta: {
-                    streamDate: vidInfo.created_at,
-                    followers: user.data.total
-                }
-            }
+                    streamDate: Date.now(),
+                    followers: 0
+                },
+                duration
+            };
         })
-    })
-    .catch(err => new AppError(err.response.data.message, err.response.data.status))
+    } else if (url.includes('twitch.tv')) {
+        await axios.get(`https://api.twitch.tv/helix/videos?id=${videoId}`, { // get video info
+            headers: twitchHeaders
+        })
+        .then(async resp => {
+            const vidInfo = resp.data.data[0]
+            const duration = convertDuration(vidInfo.duration)
     
+            req.body = {
+                ...req.body,
+                id: videoId,
+                platform: 'Twitch',
+                title: vidInfo.title,
+                author: vidInfo.user_name,
+                thumbnail: vidInfo.thumbnail_url,
+                duration
+            };
+    
+            await axios.get(`https://api.twitch.tv/helix/users/follows?to_id=${vidInfo.user_id}&first=1`, { // then get follows info
+                headers: twitchHeaders
+            }).then(user => {
+                req.body = {
+                    ...req.body,
+                    meta: {
+                        streamDate: vidInfo.created_at,
+                        followers: user.data.total
+                    }
+                }
+            })
+        })
+        .catch(err => new AppError(err.response.data.message, err.response.data.status));
+    } else { 
+        return res.status(400).json({ status: 'fail', message: 'Unsupported host! Only Twitch and YouTube currently supported'});
+    }
 
-    const newVideo = await TwitchWatchlist.create(req.body)
+    const newVideo = await TwitchWatchlist.create(req.body);
 
     res.status(201).json({
         status: 'ok',
+        message: 'Video has been successfully added to the watch list',
         data: newVideo
-    })
-})
+    });
+});
 
 exports.updateVideo = catchAsync(async (req, res, next) => {
     const { flags, ...body} = req.body
@@ -157,7 +185,7 @@ exports.moveSuggestion = catchAsync(async (req, res, next) => {
 })
 
 exports.checkVideosAvailability = catchAsync(async (req, res, next) => {
-    const list = await TwitchWatchlist.find({ 'flags.isAvailable': {$ne: false} }).select({ id: 1 })
+    const list = await TwitchWatchlist.find({ platform: 'Twitch', 'flags.isAvailable': {$ne: false} }).select({ id: 1 })
     const currentIds = list.map(vid => vid.id)
     
     await axios.get(`https://api.twitch.tv/helix/videos?id=${currentIds.join(',')}`, {
