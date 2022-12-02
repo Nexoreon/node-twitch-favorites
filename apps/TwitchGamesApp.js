@@ -10,8 +10,8 @@ const { updateGameHistory, createStats, sendNotification, createVodSuggestion } 
 
 const checkBannedStreamers = async () => { // checks if banned streamer timer expired
     await TwitchBan.deleteMany({permanent: false, expiresIn: {$lte: Date.now()}})
-    .then(unbanned => unbanned.deletedCount ? console.log(chalk.yellowBright(`[Twitch Games]: ${unbanned.deletedCount} has been unbanned since ban timer expired`)) : null)
-    .catch(err => console.log(chalk.red('[Twitch Games]: Error happened while executing application! Canceling operation.'), err))
+    .then(unbanned => unbanned.deletedCount ? console.log(chalk.yellowBright(`[Twitch Games]: ${unbanned.deletedCount} стримера было разблокировано в связи с истечением срока бана`)) : null)
+    .catch(err => console.log(chalk.red('[Twitch Games]: Произошла ошибка во время выполнения приложения! Операция отменена.'), err))
 }
 
 const banStreamer = async stream => {
@@ -26,7 +26,7 @@ const banStreamer = async stream => {
 }
 
 const TwitchGamesApp = async () => {
-    console.log(chalk.yellowBright('[Twitch Games]: Launching checks in Twitch...'), new Date(Date.now()).toLocaleString())
+    console.log(chalk.yellowBright('[Twitch Games]: Запуск проверки игр на Twitch...'), new Date(Date.now()).toLocaleString())
     try {
         checkBannedStreamers()
         const dbStreamersStats = await TwitchStats.find()
@@ -44,11 +44,11 @@ const TwitchGamesApp = async () => {
         let twitchResponse
     
         const table = new Table({
-            head: ['Min. viewers', 'Total viewers', 'Game', 'Streamer', 'Title'],
+            head: ['Мин. зрителей', 'Всего зрителей', 'Игра', 'Стример', 'Заголовок'],
             colWidths: [15, 15, 25, 25, 27]
         })
         const tableArray = []
-        
+
         try {
             const askTwitch = await axios.get(`https://api.twitch.tv/helix/streams?first=60&${getGamesIDs.join('&')}`, { // make a request to twitch api
                 headers: {
@@ -56,20 +56,20 @@ const TwitchGamesApp = async () => {
                     'client-id': process.env.TWITCH_CLIENT
                 }
             })
-            console.log(chalk.yellowBright('[Twitch Games]: Successefully got streams data. Processing...'))
+            console.log(chalk.yellowBright('[Twitch Games]: Данные о стримах успешно получены. Обработка...'))
     
             twitchResponse = askTwitch.data.data // set fetched data from twitch api (fetched data contains streamers that are currently playing previously specified games)
         } catch (e) {
-            console.log(chalk.red('[Twitch Games]: Error while getting streams data!'), e)
+            console.log(chalk.red('[Twitch Games]: Ошибка получения данных о стримах!'), e)
         }
     
         twitchResponse.map(async stream => { // map all streams
-            if (!bannedStreamersIDs.includes(stream.user_id) && !favoriteStreamersIDs.includes(stream.user_id)) { // if streamer id is in the banned list or favorite list skip him
+            if (!bannedStreamersIDs.includes(stream.user_id) && !favoriteStreamersIDs.includes(stream.user_id) && gamesIDs.includes(stream.game_id)) { // if streamer id is in the banned list or favorite list skip him. TWITCH API BUG FIX APPLIED: Check if game id exists in followed games ids list
                 if (!streamersStatsIDs.includes(stream.user_id) && stream.language === 'en' && stream.viewer_count >= 1000 || !streamersStatsIDs.includes(stream.user_id) && stream.language === 'ru' && stream.viewer_count >= 2000) {
                     createStats(stream)
                 }
         
-                if (!bannedStreamersIDs.includes(stream.user_id) && stream.language === 'en') { // make sure that streams language is english
+                if (!bannedStreamersIDs.includes(stream.user_id) && stream.language === 'en' || !bannedStreamersIDs.includes(stream.user_id) && stream.language === 'ru') { // make sure that streams language is russian or english
                     const gameIndex = gamesIDs.indexOf(stream.game_id) // get game id that streamer currently playing
                     const minViewers = dbGames[gameIndex].search.minViewers // min amount of viewers required to trigger notification
                     const gameCover = dbGames[gameIndex].boxArt.replace('XSIZExYSIZE', '100x140') // get game box art
@@ -78,17 +78,16 @@ const TwitchGamesApp = async () => {
                     }
         
                     if (stream.viewer_count >= minViewers) { // if streamer has more viewers than specified in minViewers variable...
-                        console.log(chalk.yellowBright(`Found streamer ${stream.user_name} that plays ${stream.game_name} with ${stream.viewer_count} viwers. Sending notification...`))
+                        console.log(chalk.yellowBright(`Найден стример ${stream.user_name} который играет в ${stream.game_name} с ${stream.viewer_count} зрителями. Отсылка уведомления...`))
                         sendNotification({
                             title: stream.game_name,
-                            message: `${stream.user_name} plays ${stream.game_name} with ${stream.viewer_count} viewers`,
+                            message: `${stream.user_name} играет в ${stream.game_name} с ${stream.viewer_count} зрителями`,
                             link: `https://twitch.tv/${stream.user_login}`,
                             icon: gameCover
                         })
                         createVodSuggestion({
                             user_id: stream.user_id,
-                            games: [stream.game_name],
-                            thumbnail: stream.thumbnail_url
+                            games: [stream.game_name]
                         })
                         updateGameHistory({stream, isFavorite: false})
                         banStreamer(stream)
@@ -101,10 +100,10 @@ const TwitchGamesApp = async () => {
         if (table.length) {
             console.log(table.toString())
         } else {
-            console.log(chalk.yellowBright("[Twitch Games]: Haven't found any suitable streams! Skipping table creation"))
+            console.log(chalk.yellowBright('[Twitch Games]: Подходящих по критериям стримов не найдено! Таблица составлена не будет'))
         }
     } catch (e) {
-        console.log(chalk.red('[Twitch Games]: Error happened while executing application! Canceling operation.'), e)
+        console.log(chalk.red('[Twitch Games]: Произошла ошибка во время выполнения приложения! Операция отменена.'), e)
     }
 }
 
