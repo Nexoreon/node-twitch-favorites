@@ -1,9 +1,28 @@
 const axios = require('axios')
+const chalk = require('chalk')
 const TwitchStreamer = require('../models/twitchStreamerModel')
-const TwitchWatchlist = require('../models/twitchWatchlistModel')
 const TwitchGame = require('../models/twitchGameModel')
 const TwitchStats = require('../models/twitchStatsModel')
+const TwitchWatchlist = require('../models/twitchWatchlistModel')
 const pushNotification = require('../utils/pushNotification')
+
+exports.twitchHeaders = {
+    'client-id': process.env.TWITCH_CLIENT,
+    'Authorization': process.env.TWITCH_TOKEN
+}
+
+// converts duration to h:m:s string
+exports.convertDuration = duration => {
+    const h = duration.split('h')
+    const m = h[1].split('m')
+    const s = m[1].split('s')
+    const hours = h[0]
+    let minutes = m[0]
+    let secounds = s[0]
+    if (minutes.length !== 2) minutes = `0${m[0]}`
+    if (secounds.length !== 2) secounds = `0${s[0]}`
+    return `${hours}:${minutes}:${secounds}`
+}
 
 exports.updateGameHistory = async ({stream, isFavorite}) => {
     await TwitchGame.findOneAndUpdate({id: stream.game_id}, { // add mark about this event to the game doc
@@ -40,10 +59,10 @@ exports.sendNotification = ({title, message, link, icon}) => {
                 icon
             }
         }
-    }).then(() => console.log('[Pusher]: Notification has been successefully sent!')).catch(e => console.log(chalk.red('[Pusher]: Error while sending notification!'), e))
+    }).then(() => console.log('[Pusher]: Уведомление успешно отравлено!')).catch(e => console.log(chalk.red('[Pusher]: Ошибка отправки уведомления!'), e))
 }
 
-exports.createVodSuggestion = async ({ user_id, thumbnail, games }) => {
+exports.createVodSuggestion = async ({ user_id, games }) => {
     const twitchHeaders = {
         'client-id': process.env.TWITCH_CLIENT,
         'Authorization': process.env.TWITCH_TOKEN
@@ -60,11 +79,12 @@ exports.createVodSuggestion = async ({ user_id, thumbnail, games }) => {
     const followers = getFollowers.data.total
     const { id, title, user_name: author, created_at: streamDate, url } = data
 
-    await TwitchWatchlist.create({
+    // find existing suggestions with the same author and game
+    const suggestionExists = await TwitchWatchlist.findOne({ author, games, relatedTo: { $exists: false } });
+    const newVod = await TwitchWatchlist.create({
         id,
         title,
-        author, 
-        thumbnail, 
+        author,
         games,
         url,
         meta: {
@@ -73,9 +93,16 @@ exports.createVodSuggestion = async ({ user_id, thumbnail, games }) => {
         },
         flags: {
             isSuggestion: true
-        }
+        },
+        ...(suggestionExists && { relatedTo: suggestionExists._id })
     })
-}
+    .catch(err => {
+        const isDuplicateError = err.code === 'E11000'
+        console.log(isDuplicateError ? chalk.red('Такое видео уже было добавлено в список предложений ранее!') : console.log(err));
+    });
+
+    if (suggestionExists) await TwitchWatchlist.findByIdAndUpdate({ _id: suggestionExists._id }, { $addToSet: {parts: newVod._id }, updatedAt: Date.now(), sortDate: Date.now() });
+};
 
 exports.checkActiveGame = async (id, removeJob, everyGame) => {
     const removeNotifyingData = async () => {
@@ -102,15 +129,15 @@ exports.checkActiveGame = async (id, removeJob, everyGame) => {
     const streamData = response.data.data[0]
 
     if (!streamData) { // if streamer ended the stream, end task and remove game information from document
-        console.log('[Twitch Streamers]: Streamer ended the stream. Removing task...')
+        console.log('[Twitch Streamers]: Стример закончил стримимить. Удаление задачи...')
         return removeNotifyingData()
     }
 
     if (everyGame && streamData.game_name !== streamer.gameName) {
-        console.log('[Twitch Streamers]: Streamer started playing another game. Sending notification...');
+        console.log('[Twitch Streamers]: Стример начал играть в другую игру. Отправка уведомления...');
         this.sendNotification({
-            title: `${streamData.user_name} started playing next game`,
-            message: `Streamer ${streamData.user_name} started playing ${streamData.game_name}`,
+            title: `${streamData.user_name} перешёл к следующей игре`,
+            message: `Стример начал играть в ${streamData.game_name}`,
             icon: streamer.avatar,
             link: `https://twitch.tv/${streamData.user_login}`      
         });
@@ -118,15 +145,15 @@ exports.checkActiveGame = async (id, removeJob, everyGame) => {
     }
 
     if (streamData.game_name !== streamer.gameName) { // if streamer changed the game, send notification and remove this job
-        console.log('[Twitch Streamers]: Streamer started playing another game. Sending notification...')
+        console.log('[Twitch Streamers]: Стример начал играть в другую игру. Отправка уведомления...')
         this.sendNotification({
-            title: `${streamData.user_name} started playing next game`,
-            message: `Streamer ${streamData.user_name} started playing ${streamData.game_name}`,
+            title: `${streamData.user_name} перешёл к следующей игре`,
+            message: `Стример начал играть в ${streamData.game_name}`,
             icon: streamer.avatar,
             link: `https://twitch.tv/${streamData.user_login}`      
         })
         return removeNotifyingData()
     } else {
-        console.log(`[Twitch Streamers]: Streamer ${streamData.user_name} still playing current game`)
+        console.log(`[Twitch Streamers]: Стример ${streamData.user_name} ещё не сменил игру`)
     }
 }
