@@ -5,10 +5,10 @@ const AppError = require('../utils/appError')
 exports.banStreamer = catchAsync(async (req, res, next) => {
     let { expiresIn } = req.body
     expiresIn = Date.now() + expiresIn * 3600000 // received hours * ms
-    const newStreamer = await TwitchBan.create({...req.body, expiresIn: expiresIn})
+    const newStreamer = await TwitchBan.create({...req.body, expiresIn})
 
     res.status(201).json({
-        status: 'success',
+        status: 'ok',
         data: newStreamer
     })
 })
@@ -17,38 +17,39 @@ exports.getBannedStreamers = catchAsync(async (req, res, next) => {
     const bannedStreamers = await TwitchBan.find().sort({date: -1})
 
     res.status(200).json({
-        status: 'success',
+        status: 'ok',
         data: bannedStreamers
     })
 })
 
 exports.getBannedStreamer = catchAsync(async (req, res, next) => {
     const bannedStreamer = await TwitchBan.findById(req.params.id)
-    if (!bannedStreamer) return next(new AppError("This streamer isn't on the ban list!", 404))
+    if (!bannedStreamer) return next(new AppError('Такого стримера нету в списке забаненных!', 404))
 
     res.status(200).json({
-        status: 'success',
+        status: 'ok',
         data: bannedStreamer
     })
 })
 
 exports.editBan = catchAsync(async (req, res, next) => {
-    const { date, permanent, reason } = req.body
-    const bannedStreamer = await TwitchBan.findByIdAndUpdate(req.params.id, { expiresIn: date, permanent, reason }, {new: true})
-    if (!bannedStreamer) return next(new AppError("This streamer isn't on the ban list!", 404))
+    const { date, expiresIn, permanent, reason } = req.body
+    console.log(expiresIn)
+    const bannedStreamer = await TwitchBan.findByIdAndUpdate(req.params.id, { date, expiresIn, permanent, reason }, {new: true})
+    if (!bannedStreamer) return next(new AppError('Такого стримера нету в списке забаненных!', 404))
 
     res.status(200).json({
-        status: 'success',
-        message: 'Successfully edited ban details'
+        status: 'ok',
+        message: 'Данные о блокировке успешно отредактированы'
     })
 })
 
 exports.unbanStreamer = catchAsync(async (req, res, next) => {
     const streamer = await TwitchBan.findByIdAndDelete(req.params.id)
-    if (!streamer) return next(new AppError("This streamer isn't on the ban list!", 404))
+    if (!streamer) return next(new AppError('Такого стримера нету в списке забаненных!', 404))
 
     res.status(204).json({
-        status: 'success',
-        message: 'Streamer has been unbanned'
+        status: 'ok',
+        message: 'Стример успешно разбанен'
     })
 })
