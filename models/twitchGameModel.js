@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const twitchGameSchema = new mongoose.Schema({
     id: {
@@ -21,9 +21,13 @@ const twitchGameSchema = new mongoose.Schema({
             default: 2000
         }
     },
-    history: Array
-})
+    history: Array,
+    addedAt: {
+        type: Date,
+        default: Date.now
+    }
+});
 
-const TwitchGame = mongoose.model('ma_twitch-game', twitchGameSchema)
+const TwitchGame = mongoose.model('ma_twitch-game', twitchGameSchema);
 
-module.exports = TwitchGame
+module.exports = TwitchGame;
