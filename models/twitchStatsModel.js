@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const twitchStatsSchema = new mongoose.Schema({
     userId: String,
@@ -7,16 +7,12 @@ const twitchStatsSchema = new mongoose.Schema({
     gameName: String,
     viewers: Number,
     title: String,
-    date: Date
-})
+    date: {
+        type: Date,
+        default: Date.now
+    }
+});
 
-twitchStatsSchema.pre('save', function(next) {
-    if (!this.isNew) return next()
+const TwitchStats = mongoose.model('ma_twitch-stats', twitchStatsSchema);
 
-    this.date = Date.now()
-    next()
-})
-
-const TwitchStats = mongoose.model('ma_twitch-stats', twitchStatsSchema)
-
-module.exports = TwitchStats
+module.exports = TwitchStats;

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const twitchStreamerSchema = new mongoose.Schema({
     id: {
@@ -24,8 +24,8 @@ const twitchStreamerSchema = new mongoose.Schema({
     streamHistory: [String],
     gameName: String,
     cooldown: Date
-})
+});
 
-const TwitchStreamer = mongoose.model('ma_twitch-streamers', twitchStreamerSchema)
+const TwitchStreamer = mongoose.model('ma_twitch-streamers', twitchStreamerSchema);
 
-module.exports = TwitchStreamer
+module.exports = TwitchStreamer;

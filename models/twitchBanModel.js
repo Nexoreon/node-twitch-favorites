@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const twitchBanSchema = new mongoose.Schema({
     userId: String,
@@ -10,16 +10,13 @@ const twitchBanSchema = new mongoose.Schema({
         default: false
     },
     reason: String,
-    date: Date,
+    date: {
+        type: Date,
+        default: Date.now
+    },
     expiresIn: Date,
-})
+});
 
-twitchBanSchema.pre('save', function(next) {
-    if (!this.isNew) return next()
-    this.date = Date.now()
-    next()
-})
+const TwitchBan = mongoose.model('ma_twitch-ban', twitchBanSchema);
 
-const TwitchBan = mongoose.model('ma_twitch-ban', twitchBanSchema)
-
-module.exports = TwitchBan
+module.exports = TwitchBan;
