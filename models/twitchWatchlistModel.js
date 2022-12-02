@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const twitchWatchlistSchema = new mongoose.Schema({
     id: {
@@ -6,6 +6,7 @@ const twitchWatchlistSchema = new mongoose.Schema({
         required: [true, 'Vod should have ID from platform'],
         unique: [true, 'This vod already been added before']
     },
+    relatedTo: mongoose.Types.ObjectId,
     platform: {
         type: String,
         enum: ['Twitch', 'YouTube'],
@@ -24,10 +25,7 @@ const twitchWatchlistSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Specify link for the vod']
     },
-    thumbnail: {
-        type: String,
-        required: [true, 'Specify preview image link']
-    },
+    thumbnail: String,
     meta: {
         streamDate: Date,
         followers: Number,
@@ -36,6 +34,7 @@ const twitchWatchlistSchema = new mongoose.Schema({
         type: [String],
         required: [true, 'Specify name of the games']
     },
+    parts: [mongoose.Types.ObjectId],
     priority: {
         type: Number,
         min: 1,
@@ -54,12 +53,16 @@ const twitchWatchlistSchema = new mongoose.Schema({
         },
         isShortTerm: Boolean,
     },
+    sortDate: {
+        type: Date,
+        default: Date.now
+    },
     addedAt: {
         type: Date,
         default: Date.now
     }
-})
+});
 
-const TwitchWatchlist = mongoose.model('ma_twitch-watchlist', twitchWatchlistSchema)
+const TwitchWatchlist = mongoose.model('ma_twitch-watchlist', twitchWatchlistSchema);
 
-module.exports = TwitchWatchlist
+module.exports = TwitchWatchlist;
