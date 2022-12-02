@@ -1,14 +1,14 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const twitchReportSchema = new mongoose.Schema({
     timestamp: {
         type: Date,
         default: Date.now
     },
-    streams: Array,
+    highlights: Array,
     follows: Array
-})
+});
 
-const TwitchReport = mongoose.model('ma_twitch-report', twitchReportSchema)
+const TwitchReport = mongoose.model('ma_twitch-report', twitchReportSchema);
 
-module.exports = TwitchReport
+module.exports = TwitchReport;
