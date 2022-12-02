@@ -43,17 +43,19 @@ exports.createGame = catchAsync(async (req, res, next) => {
 })
 
 exports.getAllGames = catchAsync(async (req, res, next) => {
-    const games = await TwitchGame.find()
+    const { limit } = req.query;
+    const items = await TwitchGame.find().sort({ addedAt: -1 }).limit(limit * 1);
+    const total = await TwitchGame.countDocuments();
 
     res.status(200).json({
         status: 'success',
-        data: games
-    })
-})
+        data: { items, total }
+    });
+});
 
 exports.getGame = catchAsync(async (req, res, next) => {
     const game = await TwitchGame.findById(req.params.id)
-    if (!game) return next(new AppError("This game isn't in the favorite games list!", 404))
+    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404))
 
     res.status(200).json({
         status: 'success',
@@ -65,7 +67,7 @@ exports.updateGame = catchAsync(async (req, res, next) => {
     const game = await TwitchGame.findByIdAndUpdate(req.params.id, {
         $set: req.body
     }, {new: true, multi: true})
-    if (!game) return next(new AppError("This game isn't in the favorite games list!", 404))
+    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404))
 
     res.status(200).json({
         status: 'success',
@@ -75,13 +77,13 @@ exports.updateGame = catchAsync(async (req, res, next) => {
 
 exports.deleteGame = catchAsync(async (req, res, next) => {
     const game = await TwitchGame.findByIdAndDelete(req.params.id)
-    if (!game) return next(new AppError("This game isn't in the favorite games list!", 404))
+    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404))
 
     await TwitchReport.deleteMany({gameId: game.id})
 
     res.status(204).json({
         status: 'success',
-        message: 'Successefully removed game'
+        message: 'Игра успешно удалена'
     })
 })
 
@@ -96,7 +98,7 @@ exports.addGameHistory = catchAsync(async (req, res, next) => {
             timestamp: Date.now() 
         }}
     }, {new: true})
-    if (!game) return next(new AppError("This game isn't in the favorite games list!", 404))
+    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404))
 
     res.status(200).json({
         status: 'success',
