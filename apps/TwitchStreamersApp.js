@@ -2,9 +2,9 @@ const axios = require('axios')
 const chalk = require('chalk')
 const pushNotification = require('../utils/pushNotification')
 
-const TwitchStreamer = require('../twitchStreamerModel')
-const TwitchGame = require('../twitchGameModel')
-const TwitchStats = require('../twitchStatsModel')
+const TwitchStreamer = require('../models/twitchStreamerModel')
+const TwitchGame = require('../models/twitchGameModel')
+const TwitchStats = require('../models/twitchStatsModel')
 const { createStats, updateGameHistory, sendNotification, createVodSuggestion } = require('./TwitchCommon')
 
 const banStreamer = async user_id => {
