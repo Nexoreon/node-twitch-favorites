@@ -18,9 +18,3 @@ scheduler.addSimpleIntervalJob(checkGames)
 
 // Twitch Stats: Checks every 24 hours for streamers stats in stats db and generates daily reports
 const generateTwitchReport = nodeScheduler.scheduleJob({ hour: 20, minute: 59, tz: 'Etc/UTC'}, TwitchStatsApp)
-
-// Heroku anti-sleep request
-const wakeHeroku = new SimpleIntervalJob({ minutes: 25 }, new Task('wakeHeroku', async () => {
-    await axios.get('https://node-twitch-favorites.herokuapp.com/api/v1/app/wakeHeroku')
-}))
-scheduler.addSimpleIntervalJob(wakeHeroku)
