@@ -49,7 +49,6 @@ router.route('/watchlist/moveSuggestion')
 .patch(TwitchWatchlistController.moveSuggestion)
 
 router.route('/watchlist/:id')
-.get(TwitchWatchlistController.getVideo)
 .patch(TwitchWatchlistController.updateVideo)
 .delete(TwitchWatchlistController.deleteVideo)
 
