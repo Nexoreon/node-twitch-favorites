@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@pusher/push-notifications-server": "^1.2.3",
-    "axios": "^0.27.2",
+    "axios": "^1.2.0",
     "chalk": "^4.1.1",
     "cli-table": "^0.3.6",
     "cors": "^2.8.5",
@@ -21,7 +21,7 @@
     "morgan": "^1.10.0",
     "node-schedule": "^2.0.0",
     "nodemon": "^2.0.7",
-    "toad-scheduler": "^1.0.2"
+    "toad-scheduler": "^2.0.0"
   },
   "engines": {
     "node": ">=15.14.0"
