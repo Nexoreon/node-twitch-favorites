@@ -20,7 +20,7 @@ scheduler.addSimpleIntervalJob(checkGames)
 const generateTwitchReport = nodeScheduler.scheduleJob({ hour: 20, minute: 59, tz: 'Etc/UTC'}, TwitchStatsApp)
 
 // Render anti-sleep request
-const wakeRender = new SimpleIntervalJob({ minutes: 20 }, new Task('wakeRender', async () => {
+const wakeRender = new SimpleIntervalJob({ minutes: process.env.APP_RECONNECT_TIMER }, new Task('wakeRender', async () => {
     await axios.get('https://node-twitch-favorites.onrender.com/').catch(err => {});
 }));
 scheduler.addSimpleIntervalJob(wakeRender);
