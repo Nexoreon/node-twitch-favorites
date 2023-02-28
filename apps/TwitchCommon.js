@@ -4,6 +4,7 @@ const TwitchStreamer = require('../models/twitchStreamerModel')
 const TwitchGame = require('../models/twitchGameModel')
 const TwitchStats = require('../models/twitchStatsModel')
 const TwitchWatchlist = require('../models/twitchWatchlistModel')
+const TwitchBan = require('../models/twitchBanModel');
 const pushNotification = require('../utils/pushNotification')
 
 exports.twitchHeaders = {
@@ -13,16 +14,17 @@ exports.twitchHeaders = {
 
 // converts duration to h:m:s string
 exports.convertDuration = duration => {
-    const h = duration.split('h')
-    const m = h[1].split('m')
-    const s = m[1].split('s')
-    const hours = h[0]
-    let minutes = m[0]
-    let secounds = s[0]
-    if (minutes.length !== 2) minutes = `0${m[0]}`
-    if (secounds.length !== 2) secounds = `0${s[0]}`
-    return `${hours}:${minutes}:${secounds}`
-}
+    let includesHours = duration.includes('h');
+    const h = duration.split('h');
+    const m = h[includesHours ? 1 : 0].split('m');
+    const s = m[1].split('s');
+    const hours = h[0];
+    let minutes = m[0];
+    let secounds = s[0];
+    if (minutes.length !== 2) minutes = `0${m[0]}`;
+    if (secounds.length !== 2) secounds = `0${s[0]}`;
+    return `${includesHours ? `${hours}:` : ''}${minutes}:${secounds}`;
+};
 
 exports.updateGameHistory = async ({stream, isFavorite}) => {
     await TwitchGame.findOneAndUpdate({id: stream.game_id}, { // add mark about this event to the game doc
@@ -37,6 +39,23 @@ exports.updateGameHistory = async ({stream, isFavorite}) => {
         }}
     })
 }
+
+exports.banStreamer = async stream => {
+    await TwitchBan.create({ // set a cooldown for this streamer for 6 hours
+        userId: stream.user_id,
+        userName: stream.user_name,
+        game: stream.game_name,
+        viewers: stream.viewer_count,
+        reason: 'Temp ban',
+        expiresIn: Date.now() + 21600000
+    });
+};
+
+exports.checkBannedStreamers = async () => { // checks if ban timer expired
+    await TwitchBan.deleteMany({permanent: false, expiresIn: {$lte: Date.now()}})
+    .then(unbanned => unbanned.deletedCount ? console.log(chalk.yellowBright(`[Twitch Games]: ${unbanned.deletedCount} стримера было разблокировано в связи с истечением срока бана`)) : null)
+    .catch(err => console.log(chalk.red('[Twitch Games]: Произошла ошибка во время выполнения приложения! Операция отменена.'), err));
+};
 
 exports.createStats = async stream => {
     await TwitchStats.create({
