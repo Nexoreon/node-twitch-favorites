@@ -1,6 +1,6 @@
 {
   "name": "node-twitch-favorites",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "Three small node applications that allows you to get notifications when your favorite streamer or random streamers plays your favorite games",
   "main": "server.js",
   "scripts": {
