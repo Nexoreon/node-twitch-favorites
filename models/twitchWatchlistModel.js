@@ -34,7 +34,6 @@ const twitchWatchlistSchema = new mongoose.Schema({
         type: [String],
         required: [true, 'Specify name of the games']
     },
-    parts: [mongoose.Types.ObjectId],
     priority: {
         type: Number,
         min: 1,

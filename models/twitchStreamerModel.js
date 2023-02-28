@@ -22,8 +22,7 @@ const twitchStreamerSchema = new mongoose.Schema({
         }
     },
     streamHistory: [String],
-    gameName: String,
-    cooldown: Date
+    gameName: String
 });
 
 const TwitchStreamer = mongoose.model('ma_twitch-streamers', twitchStreamerSchema);
