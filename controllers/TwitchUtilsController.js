@@ -116,7 +116,7 @@ exports.resetNotificationStatus = catchAsync(async (req, res, next) => {
 });
 
 exports.getVodsData = catchAsync(async (req, res, next ) => {
-    const vods = await TwitchWatchlist.find({ duration: { $exists: false }, platform: 'Twitch' });
+    const vods = await TwitchWatchlist.find({ duration: { $exists: false }, platform: 'Twitch', 'flags.isAvailable': true });
     const ids = vods.map(vod => `id=${vod.id}`);
 
     if (!ids.length && res) return next(new AppError('Видео без данных отсутствуют!', 400));
