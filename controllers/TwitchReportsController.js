@@ -1,7 +1,8 @@
-const TwitchReport = require('../models/twitchReportModel')
-const TwitchStreamer = require('../models/twitchStreamerModel')
-const TwitchStats = require('../models/twitchStatsModel')
-const catchAsync = require('../utils/catchAsync')
+const TwitchReport = require('../models/twitchReportModel');
+const TwitchStreamer = require('../models/twitchStreamerModel');
+const TwitchStats = require('../models/twitchStatsModel');
+const catchAsync = require('../utils/catchAsync');
+const TwitchStatsApp = require('../apps/TwitchStatsApp');
 
 exports.getReports = catchAsync(async (req, res, next) => {
     const { limit, streamer, game } = req.query
@@ -67,4 +68,15 @@ exports.getReports = catchAsync(async (req, res, next) => {
             total
         }
     });
+});
+
+exports.createDailyReport = catchAsync(async (req, res, next) => {
+    await TwitchStatsApp()
+    .then(() => {
+        res.status(200).json({
+            status: 'ok',
+            message: 'Ежедневный отчёт успешно составлен'
+        });
+    })
+    .catch(err => next(new AppError('Ошибка составления ежедневного отчёта', 500))); 
 });

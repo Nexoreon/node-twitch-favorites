@@ -1,6 +1,7 @@
-const TwitchStreamer = require('../models/twitchStreamerModel')
-const catchAsync = require('../utils/catchAsync')
-const AppError = require('../utils/appError')
+const TwitchStreamer = require('../models/twitchStreamerModel');
+const TwitchStreamersApp = require('../apps/TwitchStreamersApp');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
 const axios = require('axios');
 
 const { checkActiveGame } = require('../apps/TwitchCommon')
@@ -127,4 +128,15 @@ exports.notifyOnNextGame = catchAsync(async (req, res, next) => {
         status: 'ok',
         message: 'Вы будете оповещены когда стример начнёт играть в следующую игру'
     });
+});
+
+exports.checkStreamersActivity = catchAsync(async (req, res, next) => {
+    await TwitchStreamersApp()
+    .then(() => {
+        res.status(200).json({
+            status: 'ok',
+            message: 'Проверка активности успешно завершена'
+        });
+    })
+    .catch(err => next(new AppError('Ошибка проверки активности стримеров!', 500)));
 });

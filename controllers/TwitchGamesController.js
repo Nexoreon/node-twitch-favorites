@@ -1,8 +1,9 @@
-const TwitchGame = require('../models/twitchGameModel')
-const TwitchReport = require('../models/twitchReportModel')
-const catchAsync = require('../utils/catchAsync')
-const AppError = require('../utils/appError')
-const axios = require('axios')
+const TwitchGame = require('../models/twitchGameModel');
+const TwitchReport = require('../models/twitchReportModel');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
+const axios = require('axios');
+const TwitchGamesApp = require('../apps/TwitchGamesApp');
 
 exports.addGame = catchAsync(async (req, res, next) => {
     const importGame = await axios.get(`https://api.twitch.tv/helix/games?game_id=${req.body.gameId}`, {
@@ -105,3 +106,14 @@ exports.addGameHistory = catchAsync(async (req, res, next) => {
         data: game
     })
 })
+
+exports.checkGamesActivity = catchAsync(async (req, res, next) => {
+    await TwitchGamesApp()
+    .then(() => {
+        res.status(200).json({
+            status: 'ok',
+            message: 'Проверка активности игр завершена'
+        });
+    })
+    .catch(err => next(new AppError('Ошибка проверки активности игр!', 500)));
+});
