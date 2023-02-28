@@ -8,10 +8,29 @@ const suggestionsQuery = { 'flags.isSuggestion': true, relatedTo: { $exists: fal
 
 exports.getVideos = catchAsync(async (req, res, next) => {
     const { suggestionsLimit } = req.query;
-    const videos = await TwitchWatchlist.find({ 'flags.isSuggestion': false }).sort({ priority: -1 })
-    const mnTotal = videos.length
+    const videos = await TwitchWatchlist.aggregate([
+        { $match: { 'flags.isSuggestion': false }},
+        { $lookup: {
+            from: 'ma_twitch-watchlists',
+            localField: '_id',
+            foreignField: 'relatedTo',
+            as: 'parts'
+        }},
+        { $sort: { priority: -1 }}
+    ]);
+    const mnTotal = videos.length;
 
-    const suggestions = await TwitchWatchlist.find(suggestionsQuery).sort({ sortDate: -1 }).limit(suggestionsLimit * 1);
+    const suggestions = await TwitchWatchlist.aggregate([
+        { $match: suggestionsQuery },
+        { $lookup: {
+            from: 'ma_twitch-watchlists',
+            localField: '_id',
+            foreignField: 'relatedTo',
+            as: 'parts'
+        }},
+        { $sort: { sortDate: -1 }},
+        { $limit: suggestionsLimit * 1 }
+    ]);
     const sgTotal = await TwitchWatchlist.countDocuments(suggestionsQuery);
 
     res.status(200).json({
@@ -26,12 +45,22 @@ exports.getVideos = catchAsync(async (req, res, next) => {
                 total: sgTotal
             }
         }
-    })
-})
+    });
+});
 
 exports.getSuggestions = catchAsync(async (req, res, next) => {
     const { limit } = req.query;
-    const suggestions = await TwitchWatchlist.find(suggestionsQuery).sort({ sortDate: -1 }).limit(limit * 1);
+    const suggestions = await TwitchWatchlist.aggregate([
+        { $match: suggestionsQuery },
+        { $lookup: {
+            from: 'ma_twitch-watchlists',
+            localField: '_id',
+            foreignField: 'relatedTo',
+            as: 'parts'
+        }},
+        { $sort: { sortDate: -1 }},
+        { $limit: limit * 1 }
+    ]);
     const total = await TwitchWatchlist.countDocuments(suggestionsQuery);
     
     res.status(200).json({
@@ -149,9 +178,6 @@ exports.updateVideo = catchAsync(async (req, res, next) => {
 exports.deleteVideo = catchAsync(async (req, res, next) => {
     const { id } = req.params;
 
-    const findParent = await TwitchWatchlist.findOne({ parts: id });
-    if (findParent) await TwitchWatchlist.findByIdAndUpdate({ _id: findParent._id }, { $pull: { parts: id } });
-
     const findChildren = await TwitchWatchlist.find({ relatedTo: id });
     if (findChildren.length) await TwitchWatchlist.deleteMany({ relatedTo: id });
 
@@ -164,64 +190,61 @@ exports.deleteVideo = catchAsync(async (req, res, next) => {
 });
 
 exports.moveSuggestion = catchAsync(async (req, res, next) => {
-    const { id, priority, notes } = req.body
+    const { id, priority, notes } = req.body;
     await axios.get(`https://api.twitch.tv/helix/videos?id=${id}`, { // get video info
         headers: twitchHeaders
     })
     .then(async resp => {
-        const vidInfo = resp.data.data[0]
-        const duration = convertDuration(vidInfo.duration)
+        const vidInfo = resp.data.data[0];
+        const duration = convertDuration(vidInfo.duration);
+        const isLiveVod = vidInfo.thumbnail_url.includes('404_processing');
 
         req.body = {
-            thumbnail: vidInfo.thumbnail_url,
-            duration,
             priority,
-            notes
+            notes,
+            ...(!isLiveVod && { duration, thumbnail: vidInfo.thumbnail_url })
         }
     })
-    .catch(err => new AppError(err.response.data.message, err.response.data.status))
-
-    if (!req.body.thumbnail) {
-        return res.status(400).json({
-            status: 'fail',
-            message: 'Ошибка получения превью. Возможно стрим ещё не завершён'
-        })
-    }
+    .catch(err => new AppError(err.response.data.message, err.response.data.status));
 
     await TwitchWatchlist.findOneAndUpdate({ id }, {
         ...req.body,
         $set: {'flags.isSuggestion': false } 
-    })
+    });
 
     res.status(200).json({
         status: 'ok',
         data: { message: 'Видео успешно перенесено в список просмотра' }
-    })
-})
+    });
+});
 
 exports.checkVideosAvailability = catchAsync(async (req, res, next) => {
-    const list = await TwitchWatchlist.find({ platform: 'Twitch', 'flags.isAvailable': {$ne: false} }).select({ id: 1 })
-    const currentIds = list.map(vid => vid.id)
+    const list = await TwitchWatchlist.find({ platform: 'Twitch', 'flags.isAvailable': {$ne: false} });
+    const currentIds = list.map(vid => vid.id);
+    const deletedVideos = [];
     
     await axios.get(`https://api.twitch.tv/helix/videos?id=${currentIds.join(',')}`, {
         headers: twitchHeaders
-    }).then(resp => {
-        let hasDeletedVideos = false
-        const existingIds = resp.data.data.map(vid => vid.id)
+    })
+    .then(resp => {
+        let hasDeletedVideos = false;
+        const existingIds = resp.data.data.map(vid => vid.id);
         currentIds.map(async id => {
-            const videoNotAvailable = !existingIds.includes(id)
+            const video = list.filter(vid => vid.id === id)[0];
+            const videoNotAvailable = !existingIds.includes(id);
             if (videoNotAvailable) {
-                hasDeletedVideos = true
-                await TwitchWatchlist.findOneAndUpdate({ id }, {$set: { 'flags.isAvailable': false }})
+                hasDeletedVideos = true;
+                deletedVideos.push(`${video.games[0]} от ${video.author}`);
+                await TwitchWatchlist.findOneAndUpdate({ id }, {$set: { 'flags.isAvailable': false }});
             }
-        })
+        });
 
-        const message = hasDeletedVideos ? 'Одно или несколько видео больше недоступны для просмотра' : 'Все актуальные видео доступны для просмотра'
+        const message = hasDeletedVideos ? `Следующие видео больше недоступны так как были удалены с платформы: ${deletedVideos.join(', ')}` : 'Все актуальные видео доступны для просмотра';
         res.status(200).json({
             status: 'ok',
             data: { 
                 message
             }
-        })
-    })
-})
+        });
+    });
+});
