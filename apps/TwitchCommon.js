@@ -116,7 +116,7 @@ exports.createVodSuggestion = async ({ user_id, games }) => {
         ...(suggestionExists && { relatedTo: suggestionExists._id })
     })
     .catch(err => {
-        const isDuplicateError = err.code === 'E11000'
+        const isDuplicateError = err.code === 11000;
         console.log(isDuplicateError ? chalk.red('Такое видео уже было добавлено в список предложений ранее!') : console.log(err));
     });
 
