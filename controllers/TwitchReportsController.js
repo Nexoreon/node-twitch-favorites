@@ -10,19 +10,36 @@ exports.getReports = catchAsync(async (req, res, next) => {
     let match = {};
     if (streamer && !game) {
         match = { $or: [
-            {...(streamer && !game && {'highlights.userName': {$regex: `^${streamer}`}})},
-            {...(streamer && !game && {'follows.userName': {$regex: `^${streamer}`}})},
+            {'highlights.userName': {$regex: `^${streamer}`}},
+            {'follows.userName': {$regex: `^${streamer}`}},
         ]}
     }
     if (game && !streamer) {
         match = { $or: [
-            {...(game && !streamer && {'highlights.gameName': {$regex: `^${game}`}})},
-            {...(game && !streamer && {'follows.games': {$regex: `^${game}`}})}
+            {'highlights.gameName': {$regex: `^${game}`}},
+            {'follows.games': {$regex: `^${game}`}}
         ]}
     }
 
     // QUERY
-    const reports = await TwitchReport.aggregate([
+    let pipeline = [];
+    const searchPipeline = [
+        { $unwind: '$follows' },
+        { $project: { 'highlights': 0 }},
+        { $match: match },
+        { $group:
+            {
+                _id: { timestamp: '$timestamp' },
+                items: { $push: { userName: '$follows.userName', games: `$follows.games` }},
+                followList: { $push: '$followList' }
+            } 
+        },
+        { $addFields: { timestamp: '$_id.timestamp' }},
+        { $sort: { timestamp: -1 }}
+    ];
+
+    if (streamer || game) pipeline = searchPipeline;
+    pipeline = [
         { 
             $match: match
         },
@@ -40,16 +57,27 @@ exports.getReports = catchAsync(async (req, res, next) => {
         },
         {
             $limit: limit * 1
-        }
-    ]);
+        },
+        ...pipeline
+    ];
+    const reports = await TwitchReport.aggregate(pipeline);
     
     reports.map(async report => {
-        await report.follows.map(streamer => {
-            let user = report.followList.filter(user => {
-                if (user.name === streamer.userName) return user;
-            })[0];
-            if (user && user.avatar) streamer.avatar = user.avatar
-        });
+        if (!game && !streamer) {
+            await report.follows.map(streamer => {
+                let user = report.followList.filter(user => {
+                    if (user.name === streamer.userName) return user;
+                })[0];
+                if (user && user.avatar) streamer.avatar = user.avatar
+            });
+        } else {
+            await report.items.map(item => {
+                let user = report.followList[0].filter(user => {
+                    if (user.name === item.userName) return user;
+                })[0];
+                if (user && user.avatar) item.avatar = user.avatar;
+            });
+        }
     });
 
     // QUERY TODAY REPORT
