@@ -4,6 +4,7 @@ const TwitchGamesController = require('../controllers/TwitchGamesController');
 const TwitchBansController = require('../controllers/TwitchBansController');
 const TwitchReportsController = require('../controllers/TwitchReportsController');
 const TwitchWatchlistController = require('../controllers/TwitchWatchlistController');
+const TwitchUtilsController = require('../controllers/TwitchUtilsController');
 
 const router = express.Router();
 
@@ -25,7 +26,6 @@ router.route('/watchlist/moveSuggestion')
 .patch(TwitchWatchlistController.moveSuggestion);
 
 router.route('/watchlist/:id')
-.get(TwitchWatchlistController.getVideo)
 .patch(TwitchWatchlistController.updateVideo)
 .delete(TwitchWatchlistController.deleteVideo);
 
@@ -75,9 +75,6 @@ router.route('/utils/getVodsData')
 
 router.route('/utils/checkReports')
 .get(TwitchUtilsController.checkReports);
-
-router.route('/utils/createReportsBackup')
-.get(TwitchUtilsController.createReportsBackup);
 
 router.route('/utils/importFollowList')
 .get(TwitchUtilsController.importFollowList);
