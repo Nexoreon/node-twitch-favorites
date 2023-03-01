@@ -1,7 +1,6 @@
 const axios = require('axios');
-const catchAsync = require('../utils/catchAsync')
-const TwitchReport = require('../models/twitchReportModel')
-const TwitchReportBackup = require('../models/backupModels/twitchReportBackupModel');
+const catchAsync = require('../utils/catchAsync');
+const TwitchReport = require('../models/twitchReportModel');
 const TwitchStreamer = require('../models/twitchStreamerModel');
 const TwitchWatchlist = require('../models/twitchWatchlistModel');
 const AppError = require('../utils/appError');
@@ -20,18 +19,6 @@ exports.checkReports = catchAsync(async (req, res, next) => {
             amount: reports,
             latest: latestReport
         }
-    })
-})
-
-exports.createReportsBackup = catchAsync(async (req, res, next) => {
-    const reports = await TwitchReport.find()
-
-    await TwitchReportBackup.deleteMany()
-    await TwitchReportBackup.insertMany(reports)
-
-    res.status(200).json({
-        status: 'ok',
-        message: 'Резервная копия отчётов успешно создана'
     })
 })
 
