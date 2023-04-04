@@ -121,7 +121,9 @@ exports.notifyOnNextGame = catchAsync(async (req, res, next) => {
 
     const scheduledTask = new SimpleIntervalJob({ // execute task every 5 minutes
         minutes: 5
-    }, task, 'checkActiveGame');
+    }, task, {
+        id: 'checkActiveGame'
+    });
     scheduler.addSimpleIntervalJob(scheduledTask);
 
     res.status(200).json({
