@@ -47,7 +47,7 @@ exports.banStreamer = async stream => {
         game: stream.game_name,
         viewers: stream.viewer_count,
         reason: 'Temp ban',
-        expiresIn: Date.now() + 21600000
+        expiresIn: Date.now() + 43200000
     });
 };
 
@@ -128,9 +128,9 @@ exports.checkActiveGame = async (id, removeJob, everyGame) => {
         await TwitchStreamer.findOneAndUpdate({ id }, {
             $set: { 'flags.notifyOnNextGame': false },
             $unset: { gameName: 1 }
-        })
-        removeJob()
-    }
+        });
+        removeJob();
+    };
 
     const updateCurrentGame = async game => {
         await TwitchStreamer.findOneAndUpdate({ id }, {
