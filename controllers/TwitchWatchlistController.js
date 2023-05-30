@@ -9,7 +9,7 @@ const suggestionsQuery = { 'flags.isSuggestion': true, relatedTo: { $exists: fal
 exports.getVideos = catchAsync(async (req, res, next) => {
     const { suggestionsLimit } = req.query;
     const videos = await TwitchWatchlist.aggregate([
-        { $match: { 'flags.isSuggestion': false }},
+        { $match: { 'flags.isSuggestion': false, 'flags.watchLater': false }},
         { $lookup: {
             from: 'ma_twitch-watchlists',
             localField: '_id',
@@ -19,6 +19,18 @@ exports.getVideos = catchAsync(async (req, res, next) => {
         { $sort: { priority: -1 }}
     ]);
     const mnTotal = videos.length;
+
+    const watchLater = await TwitchWatchlist.aggregate([
+        { $match: { 'flags.isSuggestion': false, 'flags.watchLater': true }},
+        { $lookup: {
+            from: 'ma_twitch-watchlists',
+            localField: '_id',
+            foreignField: 'relatedTo',
+            as: 'parts'
+        }},
+        { $sort: { priority: -1 }}
+    ]);
+    const watchLaterTotal = await TwitchWatchlist.countDocuments({ 'flags.watchLater': true });
 
     const suggestions = await TwitchWatchlist.aggregate([
         { $match: suggestionsQuery },
@@ -39,6 +51,10 @@ exports.getVideos = catchAsync(async (req, res, next) => {
             main: {
                 items: videos,
                 total: mnTotal
+            },
+            watchLater: {
+                items: watchLater,
+                total: watchLaterTotal
             },
             suggestions: {
                 items: suggestions,
@@ -162,18 +178,20 @@ exports.addVideo = catchAsync(async (req, res, next) => {
 });
 
 exports.updateVideo = catchAsync(async (req, res, next) => {
-    const { flags, ...body} = req.body
+    const { flags, ...body} = req.body;
     const updatedVideo = await TwitchWatchlist.findByIdAndUpdate(req.params.id, {
         ...body,
-        ...(flags.isShortTerm && { 'flags.isShortTerm': flags.isShortTerm }),
-        ...(!flags.isShortTerm && { 'flags.isShortTerm': flags.isShortTerm })
-    })
+        $set: {
+            'flags.isShortTerm': flags.isShortTerm,
+            'flags.watchLater': flags.watchLater
+        }
+    });
 
     res.status(200).json({
         status: 'ok',
         data: updatedVideo
-    })
-})
+    });
+});
 
 exports.deleteVideo = catchAsync(async (req, res, next) => {
     const { id } = req.params;
@@ -190,7 +208,7 @@ exports.deleteVideo = catchAsync(async (req, res, next) => {
 });
 
 exports.moveSuggestion = catchAsync(async (req, res, next) => {
-    const { id, priority, notes } = req.body;
+    const { id, priority, watchLater, notes } = req.body;
     await axios.get(`https://api.twitch.tv/helix/videos?id=${id}`, { // get video info
         headers: twitchHeaders
     })
@@ -209,7 +227,7 @@ exports.moveSuggestion = catchAsync(async (req, res, next) => {
 
     await TwitchWatchlist.findOneAndUpdate({ id }, {
         ...req.body,
-        $set: {'flags.isSuggestion': false } 
+        $set: {'flags.isSuggestion': false, 'flags.watchLater': watchLater || false }
     });
 
     res.status(200).json({
