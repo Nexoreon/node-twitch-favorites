@@ -6,11 +6,23 @@ const TwitchStreamer = require('../models/twitchStreamerModel');
 const TwitchGame = require('../models/twitchGameModel');
 const TwitchStats = require('../models/twitchStatsModel');
 const TwitchBan = require('../models/twitchBanModel');
+const TwitchReport = require('../models/twitchReportModel');
 const { banStreamer, checkBannedStreamers, createStats, updateGameHistory, sendNotification, createVodSuggestion } = require('./TwitchCommon');
 
-const addToStreamHistory = async (userId, gameName) => {
+const addToStreamHistory = async (userId, userName, gameName) => {
+    const playedGames = await TwitchReport.aggregate([ // get all games that been played by streamer
+        { $match: { 'follows.userName': userName }},
+        { $unwind: '$follows' },
+        { $match: { 'follows.userName': userName }},
+        { $unwind: '$follows.games' },
+        { $group: { _id: null, data: {$addToSet: '$follows.games.name' }}},
+        { $project: { _id: 0 }},
+    ]);
+    const games = playedGames[0].data;
+    const firstTime = !games.includes(gameName); // check if he already played that game before
+
     await TwitchStreamer.updateOne({ id: userId }, {
-        $addToSet: { streamHistory: gameName }
+        $addToSet: { streamHistory: { name: gameName, firstTime } }
     });
 };
 
@@ -48,7 +60,9 @@ const TwitchStreamersApp = async () => {
             const index = following.map(str => str.id).indexOf(streamer.user_id); // find array index of streamer
             const streamerData = following[index];
 
-            if (!streamerData.streamHistory.includes(streamer.game_name) && streamer.game_name !== 'Just Chatting') addToStreamHistory(streamer.user_id, streamer.game_name);
+            if (!streamerData.streamHistory.map(game => game.name).includes(streamer.game_name) && streamer.game_name !== 'Just Chatting') {
+                addToStreamHistory(streamer.user_id, streamer.user_name, streamer.game_name);
+            }
             if (gamesIDs.includes(streamer.game_id)) { // if streamer plays one of the favorite games...
                 streamer.avatar = following[index].avatar; // set streamer avatar from db
     
