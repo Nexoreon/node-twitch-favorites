@@ -23,6 +23,7 @@ exports.checkReports = catchAsync(async (req, res, next) => {
 })
 
 exports.importFollowList = catchAsync(async (req, res, next) => {
+    // GET EXISTING AND CURRENT FOLLOW LIST
     const currentFollowList = await TwitchStreamer.find();
     const currentFollowListIds = currentFollowList.map(s => s.id);
     const getFollowList = await axios.get(`https://api.twitch.tv/helix/users/follows?first=100&from_id=${process.env.TWITCH_USER_ID}`, {
@@ -30,12 +31,26 @@ exports.importFollowList = catchAsync(async (req, res, next) => {
             'client-id': process.env.TWITCH_CLIENT,
             'Authorization': process.env.TWITCH_TOKEN
         }
-    });
+    })
+    .catch(err => console.log(['[IMPORT FOLLOW LIST]: Error while getting current follow list!', err]));
     const followList = getFollowList.data.data
-    const ids = [];
-    await followList.map(streamer => !currentFollowListIds.includes(streamer.to_id) && ids.push(`id=${streamer.to_id}`));
-    if (!ids.length) return res.status(200).json({ status: 'ok', message: 'Новых отслеживаемых стримеров не обнаружено!' });
-    const getStreamersData = await axios.get(`https://api.twitch.tv/helix/users?${ids.join('&')}`, {
+
+    // CHECK FOR NEW STREAMERS
+    const followIds = [];
+    const newIds = [];
+    await followList.map(streamer => {
+        followIds.push(streamer.to_id);
+        if (!currentFollowListIds.includes(streamer.to_id)) newIds.push(`id=${streamer.to_id}`);
+    });
+
+    // CHECK FOR UNFOLLOWED STREAMERS
+    currentFollowListIds.map(async id => {
+        if (!followIds.includes(id)) await TwitchStreamer.findOneAndRemove({ id });
+    });
+
+    // ADD NEW STREAMERS
+    if (!newIds.length) return res.status(200).json({ status: 'ok', message: 'Новых отслеживаемых стримеров не обнаружено!' });
+    const getStreamersData = await axios.get(`https://api.twitch.tv/helix/users?${newIds.join('&')}`, {
         headers: {
             'client-id': process.env.TWITCH_CLIENT,
             'Authorization': process.env.TWITCH_TOKEN
@@ -128,5 +143,40 @@ exports.getVodsData = catchAsync(async (req, res, next ) => {
     })
     .catch(err => { 
         if (res) return next(new AppError('Невозможно получить данные для удаленных видео', 404)) 
+    });
+});
+
+exports.getNotificationData = catchAsync(async (req, res, next) => {
+    const streamers = await TwitchStreamer.find({}, { id: 1, name: 1, avatar: 1, 'flags.notifyOnNewGame': 1 });
+    const enabledForAll = streamers.every(streamer => streamer.flags.notifyOnNewGame === true);
+
+    res.status(200).json({
+        status: 'ok',
+        data: {
+            items: streamers,
+            total: streamers.length,
+            enabledForAll
+        }
+    });
+});
+
+
+exports.notifyOnNewGame = catchAsync(async (req, res, next) => {
+    const { id, enabled, enabledForAll } = req.body;
+
+    if (enabledForAll !== undefined) {
+        await TwitchStreamer.updateMany({}, { $set: { 'flags.notifyOnNewGame': enabledForAll } });
+        return res.status(200).json({
+            status: 'ok',
+            message: 'Статус уведомлений для всех стримеров изменён!'
+        });
+    }
+
+    const streamer = await TwitchStreamer.findOneAndUpdate({ id }, { $set: { 'flags.notifyOnNewGame': enabled } });
+    if (!streamer) return next(new AppError('Такого стримера не найдено в датабазе!', 404));
+
+    res.status(200).json({
+        status: 'ok',
+        message: 'Статус уведомлений для этого стримера изменён'
     });
 });
