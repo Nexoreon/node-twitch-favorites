@@ -4,9 +4,9 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const axios = require('axios');
 
-const { checkActiveGame } = require('../apps/TwitchCommon')
-const { ToadScheduler, SimpleIntervalJob, Task } = require('toad-scheduler')
-const scheduler = new ToadScheduler()
+const { checkActiveGame } = require('../apps/TwitchCommon');
+const { ToadScheduler, SimpleIntervalJob, Task } = require('toad-scheduler');
+const scheduler = new ToadScheduler();
 
 exports.getStreamers = catchAsync(async (req, res, next) => {
     const streamers = await TwitchStreamer.find().sort({ name: -1 });
