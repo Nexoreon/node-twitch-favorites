@@ -19,9 +19,13 @@ const twitchStreamerSchema = new mongoose.Schema({
         notifyOnNextGame: {
             type: Boolean,
             default: false
+        },
+        notifyOnNewGame: {
+            type: Boolean,
+            default: true
         }
     },
-    streamHistory: [String],
+    streamHistory: [Object],
     gameName: String
 });
 
