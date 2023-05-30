@@ -17,7 +17,7 @@ exports.getReports = catchAsync(async (req, res, next) => {
     if (game && !streamer) {
         match = { $or: [
             {'highlights.gameName': {$regex: `^${game}`}},
-            {'follows.games': {$regex: `^${game}`}}
+            {'follows.games.game': {$regex: `^${game}`}}
         ]}
     }
 
