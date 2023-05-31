@@ -74,8 +74,8 @@ router.route('/utils/getVodsData')
 .patch(TwitchUtilsController.getVodsData);
 
 router.route('/utils/notifyOnNewGame')
-.get(protect, TwitchUtilsController.getNotificationData)
-.patch(protect, TwitchUtilsController.notifyOnNewGame);
+.get(TwitchUtilsController.getNotificationData)
+.patch(TwitchUtilsController.notifyOnNewGame);
 
 router.route('/utils/checkReports')
 .get(TwitchUtilsController.checkReports);
