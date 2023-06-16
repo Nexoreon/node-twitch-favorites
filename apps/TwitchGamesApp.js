@@ -1,15 +1,18 @@
 const axios = require('axios');
 const chalk = require('chalk');
-const Table = require('cli-table');
 
+const Settings = require('../models/settingsModel');
 const TwitchGame = require('../models/twitchGameModel');
 const TwitchBan = require('../models/twitchBanModel');
 const TwitchStats = require('../models/twitchStatsModel');
 const TwitchStreamer = require('../models/twitchStreamerModel');
 const { banStreamer, checkBannedStreamers, updateGameHistory, createStats, sendNotification, createVodSuggestion } = require('./TwitchCommon');
+const { createNotification } = require('../utils/functions');
 
 const TwitchGamesApp = async () => {
     console.log(chalk.yellowBright('[Twitch Games]: Запуск проверки игр на Twitch...'), new Date(Date.now()).toLocaleString());
+    const settings = await Settings.find();
+
     try {
         checkBannedStreamers();
         const dbStreamersStats = await TwitchStats.find();
@@ -25,12 +28,6 @@ const TwitchGamesApp = async () => {
         const gamesIDs = dbGames.map(game => game.id); // convert to games ids
         const getGamesIDs = dbGames.map(game => `game_id=${game.id}`); // convert ids for http request 
         let twitchResponse;
-    
-        const table = new Table({
-            head: ['Мин. зрителей', 'Всего зрителей', 'Игра', 'Стример', 'Заголовок'],
-            colWidths: [15, 15, 25, 25, 27]
-        });
-        const tableArray = [];
 
         try {
             const askTwitch = await axios.get(`https://api.twitch.tv/helix/streams?first=60&${getGamesIDs.join('&')}`, { // make a request to twitch api
@@ -56,35 +53,38 @@ const TwitchGamesApp = async () => {
                     const gameIndex = gamesIDs.indexOf(stream.game_id); // get game id that streamer currently playing
                     const minViewers = dbGames[gameIndex].search.minViewers; // min amount of viewers required to trigger notification
                     const gameCover = dbGames[gameIndex].boxArt.replace('XSIZExYSIZE', '100x140'); // get game box art
-                    if (stream.viewer_count >= 1000) {
-                        tableArray.push([minViewers, stream.viewer_count, stream.game_name, stream.user_name, stream.title]);
-                    }
         
                     if (stream.viewer_count >= minViewers) { // if streamer has more viewers than specified in minViewers variable...
                         console.log(chalk.yellowBright(`Найден стример ${stream.user_name} который играет в ${stream.game_name} с ${stream.viewer_count} зрителями. Отсылка уведомления...`));
+                        createNotification({
+                            sendOut: Date.now(),
+                            receivers: [process.env.USER_ID],
+                            title: stream.game_name,
+                            content: `${stream.user_name} играет в ${stream.game_name} с ${stream.viewer_count} зрителями`,
+                            link: `https://twitch.tv/${stream.user_login}`,
+                            image: gameCover
+                        });
                         sendNotification({
                             title: stream.game_name,
                             message: `${stream.user_name} играет в ${stream.game_name} с ${stream.viewer_count} зрителями`,
                             link: `https://twitch.tv/${stream.user_login}`,
-                            icon: gameCover
-                        });
+                            icon: gameCover,
+                            meta: {
+                                game: stream.game_name,
+                                streamer: stream.user_name
+                            }
+                        }, settings[0].notifications.games);
                         createVodSuggestion({
+                            streamId: stream.id,
                             user_id: stream.user_id,
                             games: [stream.game_name]
                         });
-                        updateGameHistory({stream, isFavorite: false});
+                        updateGameHistory({ stream, isFavorite: false });
                         banStreamer(stream);
                     }
                 }
             }
         });
-    
-        table.push(...tableArray);
-        if (table.length) {
-            console.log(table.toString());
-        } else {
-            console.log(chalk.yellowBright('[Twitch Games]: Подходящих по критериям стримов не найдено! Таблица составлена не будет'));
-        }
     } catch (e) {
         console.log(chalk.red('[Twitch Games]: Произошла ошибка во время выполнения приложения! Операция отменена.'), e);
     }

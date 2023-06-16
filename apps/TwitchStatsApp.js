@@ -4,10 +4,15 @@ const TwitchStats = require('../models/twitchStatsModel');
 const TwitchStreamer = require('../models/twitchStreamerModel');
 const TwitchReport = require('../models/twitchReportModel');
 const { sendNotification } = require('./TwitchCommon');
+const { createNotification } = require('../utils/functions');
+const Settings = require('../models/settingsModel');
+const { handleGetReport } = require('../modules/TelegramBot/commands');
 
 // ABOUT THIS APP: This app generates report every 24 hours if local twitch stats db has data and sends user notification with the link to report with streams list
 const TwitchStatsApp = async () => {
     console.log(chalk.greenBright('[Twitch Stats]: Запуск составления ежедневного отчёта по стримам...'));
+    const settings = await Settings.find();
+
     try {
         // FETCH DATA FROM DB
         const stats = await TwitchStats.find(); // get twitch stats from db
@@ -40,12 +45,22 @@ const TwitchStatsApp = async () => {
         .then(() => console.log(chalk.greenBright('[Twitch Stats]: Отчёт был добавлен в датабазу. Вывод таблицы и отсылка уведомления...')))
         .catch(e => console.log(chalk.red('[Twitch Stats]: Ошибка отправки отчёта в датабазу!'), e));
 
+        createNotification({
+            sendOut: Date.now(),
+            receivers: [process.env.USER_ID],
+            title: 'Отчёт о стримах готов',
+            content: 'Ежедневный отчёт о стримах за день готов',
+            link: `https://192.168.0.100/database/mini-apps/twitch-hub`,
+            image: 'https://192.168.0.100/site/MiniApps/TwitchStreamers/icon.jpg'
+        }, { push: settings[0].notifications.reports.push });
         sendNotification({
             title: 'Отчёт о стримах готов',
-            message: `Ежедневный отчёт о стримах за день готов! Посмотреть?`,
+            message: `Ежедневный отчёт о стримах за день готов`,
             icon: 'https://192.168.0.100/site/MiniApps/TwitchStreamers/icon.jpg',
-            link: 'https://192.168.0.100/database/mini-apps/twitch-hub'
+            link: 'https://192.168.0.100/database/mini-apps/twitch-hub',
+            meta: null
         });
+        if (settings[0].notifications.reports.telegram) handleGetReport();
         await TwitchStreamer.updateMany({ streamHistory: { $exists: 1 }}, {$unset: { streamHistory: 1 }});
         await TwitchStats.deleteMany({}); // deletes all day stats
     } catch (err) {

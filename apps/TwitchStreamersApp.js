@@ -8,8 +8,10 @@ const TwitchStats = require('../models/twitchStatsModel');
 const TwitchBan = require('../models/twitchBanModel');
 const TwitchReport = require('../models/twitchReportModel');
 const { banStreamer, checkBannedStreamers, createStats, updateGameHistory, sendNotification, createVodSuggestion } = require('./TwitchCommon');
+const { createNotification } = require('../utils/functions');
+const Settings = require('../models/settingsModel');
 
-const addToStreamHistory = async (userId, userName, gameName) => {
+const addToStreamHistory = async (userId, userName, gameName, notify) => {
     const playedGames = await TwitchReport.aggregate([ // get all games that been played by streamer
         { $match: { 'follows.userName': userName }},
         { $unwind: '$follows' },
@@ -18,8 +20,15 @@ const addToStreamHistory = async (userId, userName, gameName) => {
         { $group: { _id: null, data: {$addToSet: '$follows.games.name' }}},
         { $project: { _id: 0 }},
     ]);
-    const games = playedGames[0].data;
-    const firstTime = !games.includes(gameName); // check if he already played that game before
+    let firstTime = true;
+    if (playedGames.length) {
+        const games = playedGames[0].data;
+        firstTime = !games.includes(gameName); // check if he already played that game before
+        console.log(userName, gameName, `notify: ${notify}`, `first time: ${firstTime}`)
+        if (notify && firstTime) sendNotification({
+            message: `${userName} впервые играет в ${gameName}`
+        }, { telegram: true })
+    }
 
     await TwitchStreamer.updateOne({ id: userId }, {
         $addToSet: { streamHistory: { name: gameName, firstTime } }
@@ -29,6 +38,8 @@ const addToStreamHistory = async (userId, userName, gameName) => {
 // MAIN PART
 const TwitchStreamersApp = async () => {
     console.log(chalk.hex('#a970ff')('[Twitch Streamers]: Запуск проверки избранных стримеров...', new Date(Date.now()).toLocaleString()));
+    const settings = await Settings.find();
+
     try {
         checkBannedStreamers();
         const streamersStats = await TwitchStats.find();
@@ -61,7 +72,7 @@ const TwitchStreamersApp = async () => {
             const streamerData = following[index];
 
             if (!streamerData.streamHistory.map(game => game.name).includes(streamer.game_name) && streamer.game_name !== 'Just Chatting') {
-                addToStreamHistory(streamer.user_id, streamer.user_name, streamer.game_name);
+                addToStreamHistory(streamer.user_id, streamer.user_name, streamer.game_name, streamerData.flags.notifyOnNewGame);
             }
             if (gamesIDs.includes(streamer.game_id)) { // if streamer plays one of the favorite games...
                 streamer.avatar = following[index].avatar; // set streamer avatar from db
@@ -70,17 +81,30 @@ const TwitchStreamersApp = async () => {
                 if (!bannedStreamersIDs.includes(streamer.user_id)) { // if streamer doesn't have a cooldown...
                     console.log(chalk.green(`[Twitch Streamers]: Стример ${streamer.user_name} играет в ${streamer.game_name}. Отправка уведомления...`));
                     foundStreams = true;
+                    createNotification({
+                        sendOut: Date.now(),
+                        receivers: [process.env.USER_ID],
+                        title: `${streamer.game_name}`,
+                        content: `${streamer.user_name} играет в ${streamer.game_name}`,
+                        link: `https://twitch.tv/${streamer.user_login}`,
+                        image: streamer.avatar,
+                    });
                     sendNotification({
                         title: `${streamer.game_name}`,
                         message: `${streamer.user_name} играет в ${streamer.game_name}`,
                         link: `https://twitch.tv/${streamer.user_login}`,
-                        icon: streamer.avatar
-                    });
+                        icon: streamer.avatar,
+                        meta: {
+                            game: streamer.game_name,
+                            streamer: streamer.user_name
+                        }
+                    }, settings[0].notifications.follows);
                     createVodSuggestion({
+                        streamId: streamer.id,
                         user_id: streamer.user_id,
                         games: [streamer.game_name]
                     });
-                    updateGameHistory({stream: streamer, isFavorite: true});
+                    updateGameHistory({ stream: streamer, isFavorite: true });
                     banStreamer(streamer);
                 }
             }
