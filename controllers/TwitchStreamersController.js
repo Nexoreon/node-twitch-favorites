@@ -19,7 +19,7 @@ exports.getStreamers = catchAsync(async (req, res, next) => {
         }
     });
 
-    const streamersData = [...streamers]
+    const streamersData = [...streamers];
     const liveIDs = await response.data.data.map(streamer => ({ id: streamer.user_id, game: streamer.game_name }));
     streamersData.map(oldStreamer => {
             let liveContent
@@ -31,7 +31,7 @@ exports.getStreamers = catchAsync(async (req, res, next) => {
                 live: false,
                 ...(liveContent && { live: true, game: liveContent.game })
             }
-    })
+    });
 
     res.status(200).json({
         status: 'ok',
@@ -40,23 +40,23 @@ exports.getStreamers = catchAsync(async (req, res, next) => {
 });
 
 exports.getStreamer = catchAsync(async (req, res, next) => {
-    const streamer = await TwitchStreamer.findById(req.params.id)
-    if (!streamer) return next(new AppError('Такого стримера не найдено в датабазе', 404))
+    const streamer = await TwitchStreamer.findById(req.params.id);
+    if (!streamer) return next(new AppError('Такого стримера не найдено в датабазе', 404));
 
     res.status(200).json({
         status: 'ok',
         data: streamer
-    })
-})
+    });
+});
 
 exports.createStreamer = catchAsync(async (req, res, next) => {
-    const newStreamer = await TwitchStreamer.create(req.body)
+    const newStreamer = await TwitchStreamer.create(req.body);
 
     res.status(201).json({
         status: 'ok',
         data: newStreamer
-    })
-})
+    });
+});
 
 exports.updateStreamer = catchAsync(async (req, res, next) => {
     const { id } = req.params;

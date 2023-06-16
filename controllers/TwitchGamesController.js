@@ -11,8 +11,8 @@ exports.addGame = catchAsync(async (req, res, next) => {
             'client-id': process.env.TWITCH_CLIENT,
             'Authorization': `Bearer ${process.env.TWITCH_TOKEN}`
         }
-    })
-    const game = importGame.data.data
+    });
+    const game = importGame.data.data;
     const newGame = await TwitchGame.create({
         boxArt: game.box_art_url,
         id: game.id,
@@ -21,13 +21,13 @@ exports.addGame = catchAsync(async (req, res, next) => {
             isSearchable: req.body.isSearchable || true,
             minViewers: req.body.minViewers || 2000
         }
-    })
+    });
 
     res.status(201).json({
         status: 'success',
         data: newGame
-    })
-})
+    });
+});
 
 exports.createGame = catchAsync(async (req, res, next) => {
     const newGame = await TwitchGame.create({
@@ -35,13 +35,13 @@ exports.createGame = catchAsync(async (req, res, next) => {
         name: req.body.name,
         id: req.body.id,
         search: {...req.body.search}
-    })
+    });
 
     res.status(201).json({
         status: 'success',
         data: newGame
-    })
-})
+    });
+});
 
 exports.getAllGames = catchAsync(async (req, res, next) => {
     const { limit } = req.query;
@@ -55,38 +55,38 @@ exports.getAllGames = catchAsync(async (req, res, next) => {
 });
 
 exports.getGame = catchAsync(async (req, res, next) => {
-    const game = await TwitchGame.findById(req.params.id)
-    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404))
+    const game = await TwitchGame.findById(req.params.id);
+    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404));
 
     res.status(200).json({
         status: 'success',
         data: game
-    })
-})
+    });
+});
 
 exports.updateGame = catchAsync(async (req, res, next) => {
     const game = await TwitchGame.findByIdAndUpdate(req.params.id, {
         $set: req.body
-    }, {new: true, multi: true})
-    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404))
+    }, {new: true, multi: true});
+    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404));
 
     res.status(200).json({
         status: 'success',
         data: game
-    })
-})
+    });
+});
 
 exports.deleteGame = catchAsync(async (req, res, next) => {
-    const game = await TwitchGame.findByIdAndDelete(req.params.id)
-    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404))
+    const game = await TwitchGame.findByIdAndDelete(req.params.id);
+    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404));
 
-    await TwitchReport.deleteMany({gameId: game.id})
+    await TwitchReport.deleteMany({gameId: game.id});
 
     res.status(204).json({
         status: 'success',
         message: 'Игра успешно удалена'
-    })
-})
+    });
+});
 
 exports.addGameHistory = catchAsync(async (req, res, next) => {
     const game = await TwitchGame.findOneAndUpdate({id: req.body.game_id}, {
@@ -98,14 +98,14 @@ exports.addGameHistory = catchAsync(async (req, res, next) => {
             year: new Date().getFullYear(),
             timestamp: Date.now() 
         }}
-    }, {new: true})
-    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404))
+    }, {new: true});
+    if (!game) return next(new AppError('Такой игры не найдено в датабазе!', 404));
 
     res.status(200).json({
         status: 'success',
         data: game
-    })
-})
+    });
+});
 
 exports.checkGamesActivity = catchAsync(async (req, res, next) => {
     await TwitchGamesApp()

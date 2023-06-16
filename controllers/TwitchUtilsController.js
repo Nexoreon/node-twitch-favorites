@@ -1,16 +1,17 @@
 const axios = require('axios');
 const catchAsync = require('../utils/catchAsync');
 const TwitchReport = require('../models/twitchReportModel');
+const TwitchReportBackup = require('../models/twitchReportBackupModel');
 const TwitchStreamer = require('../models/twitchStreamerModel');
 const TwitchWatchlist = require('../models/twitchWatchlistModel');
 const AppError = require('../utils/appError');
 const { twitchHeaders, convertDuration } = require('../apps/TwitchCommon');
 
 exports.checkReports = catchAsync(async (req, res, next) => {
-    let hasAnomaly = false
-    const reports = await TwitchReport.count()
-    const latestReport = await TwitchReport.findOne().sort({ timestamp: -1 }).select({ timestamp: 1 })
-    if (reports < 10) hasAnomaly = true
+    let hasAnomaly = false;
+    const reports = await TwitchReport.count();
+    const latestReport = await TwitchReport.findOne().sort({ timestamp: -1 }).select({ timestamp: 1 });
+    if (reports < 10) hasAnomaly = true;
 
     res.status(200).json({
         status: 'ok',
@@ -19,8 +20,20 @@ exports.checkReports = catchAsync(async (req, res, next) => {
             amount: reports,
             latest: latestReport
         }
-    })
-})
+    });
+});
+
+exports.createReportsBackup = catchAsync(async (req, res, next) => {
+    const reports = await TwitchReport.find();
+
+    await TwitchReportBackup.deleteMany();
+    await TwitchReportBackup.insertMany(reports);
+
+    res.status(200).json({
+        status: 'ok',
+        message: 'Резервная копия отчётов успешно создана'
+    });
+});
 
 exports.importFollowList = catchAsync(async (req, res, next) => {
     // GET EXISTING AND CURRENT FOLLOW LIST
@@ -121,18 +134,18 @@ exports.getVodsData = catchAsync(async (req, res, next ) => {
     const vods = await TwitchWatchlist.find({ duration: { $exists: false }, platform: 'Twitch', 'flags.isAvailable': true });
     const ids = vods.map(vod => `id=${vod.id}`);
 
-    if (!ids.length && res) return next(new AppError('Видео без данных отсутствуют!', 400));
+    if (!ids.length && res) res.status(400).json({ status: 'fail', message: 'Видео без данных остутствуют'})
     if (ids.length) await axios.get(`https://api.twitch.tv/helix/videos?${ids.join('&')}`, { // get video info
     headers: twitchHeaders
     })
     .then(async resp => {
-        const items = await resp.data.data
+        const items = await resp.data.data;
         await items.map(async vod => {
             if (!vod.thumbnail_url.includes('404_processing')) {
                 await TwitchWatchlist.findOneAndUpdate({ id: vod.id }, { $set: { duration: convertDuration(vod.duration), thumbnail: vod.thumbnail_url } })
-                .catch(err => console.log('[Twitch Watchlist]: Ошибка обновления информации о видео!', err))
+                .catch(err => console.log('[Twitch Watchlist]: Ошибка обновления информации о видео!', err));
             }
-        })
+        });
     })
     .then(() => {
         if (!res) return;
@@ -142,7 +155,7 @@ exports.getVodsData = catchAsync(async (req, res, next ) => {
         });
     })
     .catch(err => { 
-        if (res) return next(new AppError('Невозможно получить данные для удаленных видео', 404)) 
+        if (res) return next(new AppError('Невозможно получить данные для удаленных видео', 404));
     });
 });
 

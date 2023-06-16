@@ -137,7 +137,6 @@ exports.addVideo = catchAsync(async (req, res, next) => {
         headers: twitchHeaders
     })
     .then(async resp => {
-            console.log(resp)
             const vidInfo = resp.data.data[0];
             const duration = convertDuration(vidInfo.duration);
             const isLiveVod = vidInfo.thumbnail_url.includes('404_processing');

@@ -5,7 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const TwitchStatsApp = require('../apps/TwitchStatsApp');
 
 exports.getReports = catchAsync(async (req, res, next) => {
-    const { limit, streamer, game } = req.query
+    const { limit, streamer, game } = req.query;
     // SEARCH PARAMS
     let match = {};
     if (streamer && !game) {
