@@ -1,5 +1,6 @@
 const { ToadScheduler, SimpleIntervalJob, Task } = require('toad-scheduler');
 const nodeScheduler = require('node-schedule');
+const axios = require('axios');
 const scheduler = new ToadScheduler();
 const Settings = require('../../models/settingsModel');
 
