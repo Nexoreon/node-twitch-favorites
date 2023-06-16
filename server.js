@@ -13,16 +13,15 @@ mongoose.connect(process.env.DB_URL)
 .then(() => console.log(chalk.green('[Датабаза]: Успешное соединение с датабазой!')))
 .catch(err => console.log('[Датабаза]: Ошибка соединения с датабазой!', err));
 
-const options = {
-    key: fs.readFileSync('./keys/192.168.0.100-key.pem'),
-    cert: fs.readFileSync('./keys/192.168.0.100.pem'),
-    requestCert: false,
-    rejectUnauthorized: false
-};
-
 let server;
 const successMsg = chalk.green(`[Сервер]: Успешный запуск. Сервер прослушивается на порту: ${process.env.PORT}`)
 if (process.env.PORT * 1 === 9500) {
+    const options = {
+        key: fs.readFileSync('./keys/192.168.0.100-key.pem'),
+        cert: fs.readFileSync('./keys/192.168.0.100.pem'),
+        requestCert: false,
+        rejectUnauthorized: false
+    };
     server = https.createServer(options, app).listen(process.env.PORT, () => {
         console.log(successMsg);
     });
