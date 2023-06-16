@@ -3,3 +3,6 @@ config.env
 heroku-launch.bat
 heroku-stop.bat
 keys
+Start_remote_API.js
+Stop_remote_API.js
+start.bat
