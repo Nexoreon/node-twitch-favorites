@@ -4,7 +4,7 @@ const twitchStreamerSchema = new mongoose.Schema({
     id: {
         type: String,
         required: [true, 'Streamer ID is required'],
-        unique: [true, 'This streamer ID already exists in db']
+        unique: true
     },
     login: {
         type: String,

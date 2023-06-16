@@ -1,7 +1,10 @@
 const mongoose = require('mongoose');
 
 const twitchBanSchema = new mongoose.Schema({
-    userId: String,
+    userId: {
+        type: String,
+        unique: true
+    },
     userName: String,
     game: String,
     viewers: Number,

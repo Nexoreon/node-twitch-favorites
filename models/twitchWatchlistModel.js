@@ -4,7 +4,7 @@ const twitchWatchlistSchema = new mongoose.Schema({
     id: {
         type: String,
         required: [true, 'Vod should have ID from platform'],
-        unique: [true, 'This vod already been added before']
+        unique: true
     },
     relatedTo: mongoose.Types.ObjectId,
     platform: {
@@ -60,7 +60,8 @@ const twitchWatchlistSchema = new mongoose.Schema({
     addedAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    updatedAt: Date
 });
 
 const TwitchWatchlist = mongoose.model('ma_twitch-watchlist', twitchWatchlistSchema);

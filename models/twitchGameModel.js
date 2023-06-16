@@ -4,7 +4,7 @@ const twitchGameSchema = new mongoose.Schema({
     id: {
         type: String,
         required: [true, 'Game ID is required'],
-        unique: [true, 'This game already exists in db']
+        unique: true
     },
     name: {
         type: String,
