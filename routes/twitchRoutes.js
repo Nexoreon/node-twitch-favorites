@@ -80,6 +80,9 @@ router.route('/utils/notifyOnNewGame')
 router.route('/utils/checkReports')
 .get(TwitchUtilsController.checkReports);
 
+router.route('/utils/createReportsBackup')
+.get(TwitchUtilsController.createReportsBackup);
+
 router.route('/utils/importFollowList')
 .get(TwitchUtilsController.importFollowList);
 
