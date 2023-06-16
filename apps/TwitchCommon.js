@@ -1,16 +1,18 @@
-const axios = require('axios')
-const chalk = require('chalk')
-const TwitchStreamer = require('../models/twitchStreamerModel')
-const TwitchGame = require('../models/twitchGameModel')
-const TwitchStats = require('../models/twitchStatsModel')
-const TwitchWatchlist = require('../models/twitchWatchlistModel')
+const axios = require('axios');
+const chalk = require('chalk');
+const pushNotification = require('../utils/pushNotification');
+const telegramBot = require('../utils/TelegramBot');
+
+const TwitchStreamer = require('../models/twitchStreamerModel');
+const TwitchGame = require('../models/twitchGameModel');
+const TwitchStats = require('../models/twitchStatsModel');
+const TwitchWatchlist = require('../models/twitchWatchlistModel');
 const TwitchBan = require('../models/twitchBanModel');
-const pushNotification = require('../utils/pushNotification')
 
 exports.twitchHeaders = {
     'client-id': process.env.TWITCH_CLIENT,
     'Authorization': process.env.TWITCH_TOKEN
-}
+};
 
 // converts duration to h:m:s string
 exports.convertDuration = duration => {
@@ -26,7 +28,7 @@ exports.convertDuration = duration => {
     return `${includesHours ? `${hours}:` : ''}${minutes}:${secounds}`;
 };
 
-exports.updateGameHistory = async ({stream, isFavorite}) => {
+exports.updateGameHistory = async ({ stream, isFavorite }) => {
     await TwitchGame.findOneAndUpdate({id: stream.game_id}, { // add mark about this event to the game doc
         $push: { 
             history: {
@@ -37,8 +39,8 @@ exports.updateGameHistory = async ({stream, isFavorite}) => {
                 favorite: isFavorite,
                 timestamp: Date.now() 
         }}
-    })
-}
+    });
+};
 
 exports.banStreamer = async stream => {
     await TwitchBan.create({ // set a cooldown for this streamer for 6 hours
@@ -52,7 +54,7 @@ exports.banStreamer = async stream => {
 };
 
 exports.checkBannedStreamers = async () => { // checks if ban timer expired
-    await TwitchBan.deleteMany({permanent: false, expiresIn: {$lte: Date.now()}})
+    await TwitchBan.deleteMany({ permanent: false, expiresIn: { $lte: Date.now() }})
     .then(unbanned => unbanned.deletedCount ? console.log(chalk.yellowBright(`[Twitch Games]: ${unbanned.deletedCount} стримера было разблокировано в связи с истечением срока бана`)) : null)
     .catch(err => console.log(chalk.red('[Twitch Games]: Произошла ошибка во время выполнения приложения! Операция отменена.'), err));
 };
@@ -65,38 +67,50 @@ exports.createStats = async stream => {
         gameName: stream.game_name,
         viewers: stream.viewer_count,
         title: stream.title
-    })
-}
+    });
+};
 
-exports.sendNotification = ({title, message, link, icon}) => {
-    pushNotification.publishToInterests(['project'], { // push notification to users
-        web: {
-            notification: {
-                title,
-                body: message,
-                deep_link: link,
-                icon
+exports.sendNotification = ({ title, message, link, icon, meta }, method = { push: true }) => {
+    console.log(method, title, message, icon, link)
+    if (method.push) {
+        pushNotification.publishToInterests(['project'], { // push notification to users
+            web: {
+                notification: {
+                    title,
+                    body: message,
+                    deep_link: link,
+                    icon
+                }
             }
-        }
-    }).then(() => console.log('[Pusher]: Уведомление успешно отравлено!')).catch(e => console.log(chalk.red('[Pusher]: Ошибка отправки уведомления!'), e))
-}
+        })
+        .then(() => console.log('[Pusher]: Уведомление успешно отравлено!')).catch(e => console.log(chalk.red('[Pusher]: Ошибка отправки уведомления!'), e));
+    }
+    
+    if (method.telegram) {
+        const chatId = process.env.TELEGRAM_MY_ID * 1;
+        if (!icon) return telegramBot.sendMessage(chatId, message);
+        telegramBot.sendPhoto(chatId, icon, {
+            caption: message,
+            ...(meta && { reply_markup: {
+                inline_keyboard: [
+                    [{ text: '🎙️ Стример', url: link }, { text: '🎮 Игра', url: `https://twitch.tv/game/${meta.game}`}]
+                ]
+            }})
+        });
+    }
+};
 
 exports.createVodSuggestion = async ({ user_id, games }) => {
-    const twitchHeaders = {
-        'client-id': process.env.TWITCH_CLIENT,
-        'Authorization': process.env.TWITCH_TOKEN
-    }
-
     const getVideo = await axios.get(`https://api.twitch.tv/helix/videos?user_id=${user_id}`, {
-        headers: twitchHeaders
-    })
+        headers: this.twitchHeaders
+    });
     const getFollowers = await axios.get(`https://api.twitch.tv/helix/users/follows?to_id=${user_id}&first=1`, {
-        headers: twitchHeaders
-    })
+        headers: this.twitchHeaders
+    });
 
-    const data = getVideo.data.data[0]
-    const followers = getFollowers.data.total
-    const { id, title, user_name: author, created_at: streamDate, url } = data
+    const data = getVideo.data.data[0];
+    const followers = getFollowers.data.total;
+    const { id, title, user_name: author, created_at: streamDate, url } = data;
 
     // find existing suggestions with the same author and game
     const suggestionExists = await TwitchWatchlist.findOne({ author, games, relatedTo: { $exists: false } });
@@ -119,8 +133,6 @@ exports.createVodSuggestion = async ({ user_id, games }) => {
         const isDuplicateError = err.code === 11000;
         console.log(isDuplicateError ? chalk.red('Такое видео уже было добавлено в список предложений ранее!') : console.log(err));
     });
-
-    if (suggestionExists) await TwitchWatchlist.findByIdAndUpdate({ _id: suggestionExists._id }, { $addToSet: {parts: newVod._id }, updatedAt: Date.now(), sortDate: Date.now() });
 };
 
 exports.checkActiveGame = async (id, removeJob, everyGame) => {
@@ -138,18 +150,15 @@ exports.checkActiveGame = async (id, removeJob, everyGame) => {
         });
     };
 
-    const streamer = await TwitchStreamer.findOne({ id }).select({ gameName: 1, avatar: 1 })
+    const streamer = await TwitchStreamer.findOne({ id }).select({ gameName: 1, avatar: 1 });
     const response = await axios.get(`https://api.twitch.tv/helix/streams?user_id=${id}`, {
-        headers: {
-            'client-id': process.env.TWITCH_CLIENT,
-            'Authorization': process.env.TWITCH_TOKEN
-        }
-    })
-    const streamData = response.data.data[0]
+        headers: this.twitchHeaders
+    });
+    const streamData = response.data.data[0];
 
     if (!streamData) { // if streamer ended the stream, end task and remove game information from document
-        console.log('[Twitch Streamers]: Стример закончил стримимить. Удаление задачи...')
-        return removeNotifyingData()
+        console.log('[Twitch Streamers]: Стример закончил стримимить. Удаление задачи...');
+        return removeNotifyingData();
     }
 
     if (everyGame && streamData.game_name !== streamer.gameName) {
@@ -157,7 +166,6 @@ exports.checkActiveGame = async (id, removeJob, everyGame) => {
         this.sendNotification({
             title: `${streamData.user_name} перешёл к следующей игре`,
             message: `Стример начал играть в ${streamData.game_name}`,
-            icon: streamer.avatar,
             link: `https://twitch.tv/${streamData.user_login}`      
         });
         return updateCurrentGame(streamData.game_name);
@@ -168,11 +176,10 @@ exports.checkActiveGame = async (id, removeJob, everyGame) => {
         this.sendNotification({
             title: `${streamData.user_name} перешёл к следующей игре`,
             message: `Стример начал играть в ${streamData.game_name}`,
-            icon: streamer.avatar,
             link: `https://twitch.tv/${streamData.user_login}`      
         })
-        return removeNotifyingData()
+        return removeNotifyingData();
     } else {
-        console.log(`[Twitch Streamers]: Стример ${streamData.user_name} ещё не сменил игру`)
+        console.log(`[Twitch Streamers]: Стример ${streamData.user_name} ещё не сменил игру`);
     }
 }
