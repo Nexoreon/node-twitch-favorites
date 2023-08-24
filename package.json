@@ -1,6 +1,6 @@
 {
   "name": "node-twitch-favorites",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Three small node applications that allows you to get notifications when your favorite streamer or random streamers plays your favorite games",
   "main": "server.js",
   "scripts": {
@@ -13,6 +13,7 @@
     "@pusher/push-notifications-server": "^1.2.3",
     "axios": "^1.2.0",
     "chalk": "^4.1.1",
+    "cli-table": "^0.3.11",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "express": "^4.17.1",
