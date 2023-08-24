@@ -1,5 +1,6 @@
 const axios = require('axios');
 const chalk = require('chalk');
+const Table = require('cli-table');
 
 const Settings = require('../models/settingsModel');
 const TwitchGame = require('../models/twitchGameModel');
@@ -29,6 +30,12 @@ const TwitchGamesApp = async () => {
         const getGamesIDs = dbGames.map(game => `game_id=${game.id}`); // convert ids for http request 
         let twitchResponse;
 
+        const table = new Table({
+            head: ['Min. viewers', 'Current viewers', 'Game', 'Streamer', 'Title'],
+            colWidths: [15, 15, 25, 25, 27]
+        });
+        const tableArray = [];
+
         try {
             const askTwitch = await axios.get(`https://api.twitch.tv/helix/streams?first=60&${getGamesIDs.join('&')}`, { // make a request to twitch api
                 headers: {
@@ -53,7 +60,8 @@ const TwitchGamesApp = async () => {
                     const gameIndex = gamesIDs.indexOf(stream.game_id); // get game id that streamer currently playing
                     const minViewers = dbGames[gameIndex].search.minViewers; // min amount of viewers required to trigger notification
                     const gameCover = dbGames[gameIndex].boxArt.replace('XSIZExYSIZE', '100x140'); // get game box art
-        
+
+                    if (stream.viewer_count >= 1000) tableArray.push([minViewers, stream.viewer_count, stream.game_name, stream.user_name, stream.title]);
                     if (stream.viewer_count >= minViewers) { // if streamer has more viewers than specified in minViewers variable...
                         console.log(chalk.yellowBright(`Найден стример ${stream.user_name} который играет в ${stream.game_name} с ${stream.viewer_count} зрителями. Отсылка уведомления...`));
                         createNotification({
@@ -85,6 +93,13 @@ const TwitchGamesApp = async () => {
                 }
             }
         });
+
+        table.push(...tableArray);
+        if (table.length) {
+            console.log(table.toString());
+        } else {
+            console.log(chalk.yellowBright(`[Twitch Games]: No relevant streams found! Table isn't going to be created`));
+        }
     } catch (e) {
         console.log(chalk.red('[Twitch Games]: Произошла ошибка во время выполнения приложения! Операция отменена.'), e);
     }

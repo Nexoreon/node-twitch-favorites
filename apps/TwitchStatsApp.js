@@ -1,4 +1,5 @@
 const chalk = require('chalk');
+const Table = require('cli-table');
 
 const TwitchStats = require('../models/twitchStatsModel');
 const TwitchStreamer = require('../models/twitchStreamerModel');
@@ -16,12 +17,23 @@ const TwitchStatsApp = async () => {
     try {
         // FETCH DATA FROM DB
         const stats = await TwitchStats.find(); // get twitch stats from db
+        const games = await TwitchGame.find() // get favorite games from db
+        const gamesIDs = games.map(game => game.id) // extract ids from games db
         const followsHistory = await TwitchStreamer.find({ streamHistory: { $exists: 1 }}, { streamHistory: 1, name: 1, _id: 0 });
         if (!stats.length && !followsHistory.length) return console.log(chalk.greenBright('[Twitch Stats]: Нету стримов для показа! Таблица сгенерирована не будет')); // if stats has no data, return nothing
-    
+        
+        const tableArray = []; // array that going to be filled with data for the table
+        const table = new Table({ // generate table columns
+            head: ['Min. viewers', 'Total viewers', 'Game', 'Streamer', 'Title'],
+            colWidths: [15, 10, 35, 25, 25]
+        });
+
         // HANDLE FETCHED DATA
         const statsArray = []; // this array going to be filled with the data that will be sent to the reports collection as a report
         stats.map(stream => { // map all stats
+            const findIndex = gamesIDs.indexOf(stream.gameId); // find index of game that streamer played
+            const minViewers = games[findIndex].search.minViewers || 2000; // defines minViewers with special value if minViewers field exists, otherwise it will use default 2000
+            tableArray.push([ minViewers, stream.viewers, stream.gameName, stream.userName, stream.title ]);
             statsArray.push({ // push current streamer data to the stats array
                 userId: stream.userId, 
                 userName: stream.userName, 
@@ -45,6 +57,7 @@ const TwitchStatsApp = async () => {
         .then(() => console.log(chalk.greenBright('[Twitch Stats]: Отчёт был добавлен в датабазу. Вывод таблицы и отсылка уведомления...')))
         .catch(e => console.log(chalk.red('[Twitch Stats]: Ошибка отправки отчёта в датабазу!'), e));
 
+        table.push(...tableArray); // generates table
         createNotification({
             sendOut: Date.now(),
             receivers: [process.env.USER_ID],
@@ -60,9 +73,10 @@ const TwitchStatsApp = async () => {
             link: 'https://192.168.0.100/database/mini-apps/twitch-hub',
             meta: null
         });
-        if (settings[0].notifications.reports.telegram) handleGetReport();
+        if (settings[0].notifications.reports.telegram) handleGetReport(process.env.TELEGRAM_MY_ID);
         await TwitchStreamer.updateMany({ streamHistory: { $exists: 1 }}, {$unset: { streamHistory: 1 }});
         await TwitchStats.deleteMany({}); // deletes all day stats
+        console.log(table.toString());
     } catch (err) {
         console.log(chalk.red('[Twitch Stats]: Произошла ошибка составления отчёта! Отмена операции.'), err);
     }
