@@ -73,9 +73,9 @@ router.route('/banned-streamers/:id')
 router.route('/utils/getVodsData')
 .patch(TwitchUtilsController.getVodsData);
 
-router.route('/utils/notifyOnNewGame')
+router.route('/utils/setNotificationParam')
 .get(TwitchUtilsController.getNotificationData)
-.patch(TwitchUtilsController.notifyOnNewGame);
+.patch(TwitchUtilsController.setNotificationParam);
 
 router.route('/utils/checkReports')
 .get(TwitchUtilsController.checkReports);
