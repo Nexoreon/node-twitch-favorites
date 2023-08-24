@@ -6,6 +6,7 @@ const TwitchStreamer = require('../models/twitchStreamerModel');
 const TwitchWatchlist = require('../models/twitchWatchlistModel');
 const AppError = require('../utils/appError');
 const { twitchHeaders, convertDuration } = require('../apps/TwitchCommon');
+const Settings = require('../models/settingsModel');
 
 exports.checkReports = catchAsync(async (req, res, next) => {
     let hasAnomaly = false;
@@ -163,19 +164,25 @@ exports.getNotificationData = catchAsync(async (req, res, next) => {
     const streamers = await TwitchStreamer.find({}, { id: 1, name: 1, avatar: 1, 'flags.notifyOnNewGame': 1 });
     const enabledForAll = streamers.every(streamer => streamer.flags.notifyOnNewGame === true);
 
+    const settings = await Settings.find();
+    const { notifications } = settings[0];
+
     res.status(200).json({
         status: 'ok',
         data: {
-            items: streamers,
-            total: streamers.length,
-            enabledForAll
+            streamers: {
+                items: streamers,
+                total: streamers.length,
+                enabledForAll
+            },
+            notifications
         }
     });
 });
 
 
-exports.notifyOnNewGame = catchAsync(async (req, res, next) => {
-    const { id, enabled, enabledForAll } = req.body;
+exports.setNotificationParam = catchAsync(async (req, res, next) => {
+    const { param, enabled, enabledForAll } = req.body;
 
     if (enabledForAll !== undefined) {
         await TwitchStreamer.updateMany({}, { $set: { 'flags.notifyOnNewGame': enabledForAll } });
@@ -185,7 +192,18 @@ exports.notifyOnNewGame = catchAsync(async (req, res, next) => {
         });
     }
 
-    const streamer = await TwitchStreamer.findOneAndUpdate({ id }, { $set: { 'flags.notifyOnNewGame': enabled } });
+    if (param.length !== 8) {
+        console.log(param, enabled)
+        const updateParam = await Settings.findOneAndUpdate({}, {$set: { [`notifications.${param}`]: enabled }});
+        console.log(updateParam)
+        if (!updateParam) return next(new AppError('Настройки не инициализированы!', 400));
+        return res.status(200).json({
+            status: 'ok',
+            message: 'Статус уведомления для этого параметра изменён'
+        });
+    }
+
+    const streamer = await TwitchStreamer.findOneAndUpdate({ id: param }, { $set: { 'flags.notifyOnNewGame': enabled } });
     if (!streamer) return next(new AppError('Такого стримера не найдено в датабазе!', 404));
 
     res.status(200).json({
