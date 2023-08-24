@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const SettingsSchema = new mongoose.Schema({
+const settingsSchema = new mongoose.Schema({
     enableFollowsCheck: {
         type: Boolean,
         default: true
@@ -47,10 +47,20 @@ const SettingsSchema = new mongoose.Schema({
                 type: Boolean,
                 default: false
             }
+        },
+        error: {
+            push: {
+                type: Boolean,
+                default: false
+            },
+            telegram: {
+                type: Boolean,
+                default: false
+            }
         }
     }
 });
 
-const Settings = mongoose.model('th_settings', SettingsSchema);
+const Settings = mongoose.model('th_settings', settingsSchema);
 
 module.exports = Settings;
