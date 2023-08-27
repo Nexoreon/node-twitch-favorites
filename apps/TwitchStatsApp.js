@@ -4,6 +4,7 @@ const Table = require('cli-table');
 const TwitchStats = require('../models/twitchStatsModel');
 const TwitchStreamer = require('../models/twitchStreamerModel');
 const TwitchReport = require('../models/twitchReportModel');
+const TwitchGame = require('../models/twitchGameModel');
 const { sendNotification } = require('./TwitchCommon');
 const { createNotification } = require('../utils/functions');
 const Settings = require('../models/settingsModel');
