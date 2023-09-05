@@ -1,4 +1,6 @@
+### **JS version is not going to be updated anymore. Check TS version instead**
 # node-twitch-favorites
+
 This node application allows you to monitor information about streamers and games they playing, get daily reports and keep your own watchlist of vods. It also gives you ability to send push notifications when your favorite streamer or other streamers play your favorite game. And much more...
 
 The ultimate goal of my personal project is to provide functionality that twitch never provided. It's built on Node.js, Express and MongoDB. The thing you see here is API for the project, UI will be published very soon
